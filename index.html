@@ -1823,10 +1823,23 @@ const handleAddRecommendedNode = (title, type, isCause) => {
                         <span className="icon">menu_book</span>
                     </button>
 
-                    <button onClick={() => setLang(l => l==='en'?'id':'en')}
-                        className="w-10 h-10 border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 rounded-xl font-black text-xs shadow-sm transition-colors">
-                        {t('langToggle')}
-                    </button>
+
+                    {/* Toggle Switch Bahasa */}
+                    <div className="flex bg-slate-100 p-1 rounded-xl border border-slate-200/60 shadow-inner">
+                        <button 
+                            onClick={() => setLang('en')}
+                            className={`px-3 py-1.5 rounded-lg text-xs font-black transition-all ${lang === 'en' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
+                        >
+                            EN
+                        </button>
+                        <button 
+                            onClick={() => setLang('id')}
+                            className={`px-3 py-1.5 rounded-lg text-xs font-black transition-all ${lang === 'id' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
+                        >
+                            ID
+                        </button>
+                    </div>
+
                     <div className="relative">
                         <button onClick={() => setShowMenu(!showMenu)}
                             className="flex items-center gap-2 px-3.5 py-2 border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 rounded-xl font-bold text-sm transition-colors shadow-sm">
@@ -2687,7 +2700,7 @@ const handleAddRecommendedNode = (title, type, isCause) => {
                         </div>
                     </>
                 ) : (
-                    /* ══════════════════ ENGLISH ══════════════════ */ 
+                    /* ══════════════════ ENGLISH ══════════════════ */
                     <>
                         {/* ── SECTION 1: CREATING VARIABLES ── */}
                         <div className="guide-section">
