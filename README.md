@@ -111,13 +111,13 @@ No build step, no dependencies, no server required. It's a single HTML file.
 
 ```bash
 # Clone the repo
-git clone https://github.com/YOUR_USERNAME/variable-planner.git
+git clone https://github.com/AnggaConni/variable-planner.git
 
 # Open in browser — that's it
 open index.html
 ```
 
-Or just open the [live app (beta)]([https://anggaconni.github.io/VariablePlanner/]) directly.
+Or just open the [live app beta](https://anggaconni.github.io/VariablePlanner/) directly.
 
 ### For AI features
 1. Get a free Gemini API key from [Google AI Studio](https://aistudio.google.com/app/apikey)
