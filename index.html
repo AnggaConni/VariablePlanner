@@ -301,6 +301,26 @@ const T = {
     tocDesc: { en: 'Impact & Logic Architecture', id: 'Arsitektur Dampak & Logika' },
     combTitle: { en: 'COM-B Model', id: 'Model COM-B' },
     combDesc: { en: 'Behavioral Science Diagnostic', id: 'Diagnosis Ilmu Perilaku' },
+    // --- TAMBAHAN UNTUK ALERT & NOTIFIKASI AI ---
+    alertNeedApiKey: { en: 'Please enter your Gemini API Key first.', id: 'Masukkan API Key di menu atas terlebih dahulu.' },
+    alertAiSuccess: { en: '✨ AI Magic: Successfully added new variables from analysis to your canvas!', id: '✨ Keajaiban AI: Menambahkan variabel baru dari analisa ke kanvas Anda!' },
+    alertAiFormatErr: { en: 'AI recommendation format is incorrect. Please click Revise to try again.', id: 'Format rekomendasi dari AI kurang tepat. Silakan klik tombol Revise untuk mengulanginya.' },
+    alertRecAdded: { en: 'Successfully added AI recommendation variables to the canvas!', id: 'Berhasil menambahkan variabel rekomendasi AI ke dalam kanvas!' },
+    alertNoNewRec: { en: 'No new node recommendations from AI.', id: 'Tidak ada rekomendasi node baru dari AI.' },
+    alertNodeAiFail: { en: 'Failed to process AI. Usually caused by invalid JSON format. Try clicking Revise.', id: 'Gagal memproses AI. Hal ini biasanya terjadi karena AI gagal membuat format JSON yang valid. Coba klik Revise lagi.' },
+    alertAddedVar: { en: 'Successfully added:', id: 'Berhasil menambahkan:' },
+    errorAiConnection: { en: '**Error:** Failed to connect to AI.', id: '**Error:** Gagal terhubung dengan AI.' },
+    errorGoogleSays: { en: '**Google system says:**', id: '**Sistem Google mengatakan:**' },
+
+    // --- TAMBAHAN UNTUK UI KECIL & STATS ---
+    tooltipChangeKey: { en: 'Change API Key', id: 'Ubah API Key' },
+    tooltipOpenGuide: { en: 'Open User Guide', id: 'Buka Panduan (User Guide)' },
+    btnRevise: { en: 'Revise', id: 'Revisi' },
+    systemMenu: { en: 'System', id: 'Sistem' },
+    relTypesTitle: { en: 'Relationship Types', id: 'Tipe Hubungan' },
+    addVarsToSeeStats: { en: 'Add variables to see stats', id: 'Tambahkan variabel untuk melihat statistik' },
+    labelPlaceholder: { en: 'Label', id: 'Label' },
+    typeLabel: { en: 'Type:', id: 'Tipe:' }
 
 };
 
@@ -563,7 +583,7 @@ function App() {
 
     // ── FUNGSI AI ANALYZER (ALL NODES) ──────────────────────────────────────────
     const handleStartAnalysis = async (isRevision = false) => {
-        if (!geminiKey) return alert("Please enter your Gemini API Key first.");
+        if (!geminiKey) return alert(t('alertNeedApiKey'));
         
         localStorage.setItem('gemini_api_key', geminiKey);
         setShowAiConfig(false);
@@ -655,7 +675,7 @@ function App() {
                     });
                     
                     if (newNodesToAdd.length > 0) {
-                        setTimeout(() => alert(`✨ Keajaiban AI: Menambahkan ${newNodesToAdd.length} variabel baru dari analisa ke kanvas Anda!`), 800);
+                        setTimeout(() => alert(t('alertAiSuccess')), 800);
                         return [...prevNodes, ...newNodesToAdd];
                     }
                     return prevNodes;
@@ -673,7 +693,7 @@ function App() {
             console.error(error);
             // ... (Bagian catch error asli milik Anda tanpa kode penyadap) ...
             setAiAnalysisResult({
-                analysis_markdown: `**Error:** Gagal terhubung dengan AI.\n\n**Sistem Google mengatakan:** *${error.message}*`,
+                analysis_markdown: `${t('errorAiConnection')}\n\n${t('errorGoogleSays')} *${error.message}*`,
                 topology_health: [],
                 recommendations: []
             });
@@ -686,7 +706,7 @@ function App() {
     const handleApplyRecommendation = () => {
         // Pengaman 1: Pastikan data benar-benar Array
         if (!Array.isArray(aiAnalysisResult?.recommendations)) {
-            alert("Format rekomendasi dari AI kurang tepat. Silakan klik tombol 'Revise' untuk menyuruh AI mengulanginya.");
+            alert(t('alertAiFormatErr'));
             return;
         }
 
@@ -709,16 +729,16 @@ function App() {
 
         if (newNodes.length > 0) {
             setNodes(prev => [...prev, ...newNodes]);
-            alert(`Berhasil menambahkan ${newNodes.length} variabel rekomendasi AI ke dalam kanvas!`);
+            alert(t('alertRecAdded'));
             setShowAiAnalysis(false); 
         } else {
-            alert("Tidak ada rekomendasi node baru dari AI.");
+            alert(t('alertNoNewRec'));
         }
     };
 
     // ── FUNGSI AI ANALYZER (PER NODE / JSON DATA) ───────────────────────────────────
     const handleOpenNodeAi = async (node, isRevision = false) => {
-        if (!geminiKey) return alert("Masukkan API Key di menu atas terlebih dahulu.");
+        if (!geminiKey) return alert(t('alertNeedApiKey'));
 
         setActiveAiNode(node);
         setShowNodeAiModal(true);
@@ -782,7 +802,7 @@ function App() {
 
         } catch (error) {
             console.error(error);
-            alert("Gagal memproses AI. Hal ini biasanya terjadi karena AI gagal membuat format JSON yang valid. Coba klik Revise lagi.");
+            alert(t('alertNodeAiFail'));
         } finally {
             setIsNodeAnalyzing(false);
         }
@@ -1313,7 +1333,7 @@ const handleAddRecommendedNode = (title, type, isCause) => {
                                                 {dir.symbol && <span className="mr-1 font-black">{dir.symbol}</span>}
                                                 <input value={edge.label} onChange={e => updateEdge(edge.id,'label',e.target.value)}
                                                     className="bg-transparent border-none text-center outline-none min-w-[40px] max-w-[80px]"
-                                                    placeholder="Label" onPointerDown={e => e.stopPropagation()} />
+                                                    placeholder={t('labelPlaceholder')} onPointerDown={e => e.stopPropagation()} />
                                             </div>
                                         </foreignObject>
                                     </g>
@@ -1602,7 +1622,7 @@ const handleAddRecommendedNode = (title, type, isCause) => {
                             {/* Edge direction breakdown */}
                             {edges.length > 0 && (
                                 <div>
-                                    <h4 className="text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-3">Relationship Types</h4>
+                                    <h4 className="text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-3">{t('relTypesTitle')}</h4>
                                     <div className="space-y-2">
                                         {Object.entries(EDGE_DIRECTIONS).map(([key, dir]) => {
                                             const cnt = edges.filter(e => (e.direction||'neutral') === key).length;
@@ -1651,7 +1671,7 @@ const handleAddRecommendedNode = (title, type, isCause) => {
                             {nodes.length === 0 && (
                                 <div className="text-center py-12 text-slate-400">
                                     <span className="icon text-slate-200 mb-3 block" style={{fontSize:'40px'}}>bar_chart</span>
-                                    <p className="text-sm">Add variables to see stats</p>
+                                    <p className="text-sm">{t('addVarsToSeeStats')}</p>
                                 </div>
                             )}
                         </div>
@@ -1712,7 +1732,7 @@ const handleAddRecommendedNode = (title, type, isCause) => {
 
                     <button 
                         onClick={() => setShowGuide(true)} 
-                        title="Buka Panduan (User Guide)" 
+                        title={t('tooltipOpenGuide')} 
                         className="text-slate-500 hover:text-blue-600 bg-white hover:bg-blue-50 border border-slate-200 p-2 rounded-lg transition-all flex items-center justify-center shadow-sm">
                         <span className="icon">menu_book</span>
                     </button>
@@ -1729,7 +1749,7 @@ const handleAddRecommendedNode = (title, type, isCause) => {
                         </button>
                         {showMenu && (
                             <div className="absolute right-0 top-full mt-2 w-60 bg-white border border-slate-200 rounded-2xl shadow-2xl overflow-hidden py-1.5 z-50">
-                                <div className="px-4 py-2 text-[10px] font-black uppercase tracking-widest text-slate-400">System</div>
+                                <div className="px-4 py-2 text-[10px] font-black uppercase tracking-widest text-slate-400">{t('systemMenu')}</div>
                                 <button onClick={handleExportJSON} className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-slate-50 text-sm font-semibold text-slate-700">
                                     <span className="icon icon-sm text-indigo-500">download</span> {t('saveJson')}
                                 </button>
@@ -1887,7 +1907,7 @@ const handleAddRecommendedNode = (title, type, isCause) => {
                         <button onClick={() => setAiPage(3)} className={`px-4 py-1.5 rounded-md text-sm font-semibold transition-all ${aiPage === 3 ? 'bg-white shadow-sm text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}>{t('tabRecommendations')}</button>
                     </div>
 
-                    <button onClick={() => { setShowAiAnalysis(false); setShowAiConfig(true); }} title="Ubah API Key" className="text-amber-500 hover:text-amber-600 bg-amber-50 hover:bg-amber-100 p-2 rounded-full transition-all flex items-center justify-center">
+                    <button onClick={() => { setShowAiAnalysis(false); setShowAiConfig(true); }} title={t('tooltipChangeKey')} className="text-amber-500 hover:text-amber-600 bg-amber-50 hover:bg-amber-100 p-2 rounded-full transition-all flex items-center justify-center">
                             <span className="icon">vpn_key</span>
                         </button>
                         <button onClick={() => setShowAiAnalysis(false)} className="text-slate-400 hover:text-slate-600 bg-slate-100 hover:bg-slate-200 p-2 rounded-full transition-all flex items-center justify-center">
@@ -2011,7 +2031,7 @@ const handleAddRecommendedNode = (title, type, isCause) => {
                                             />
                                         </div>
                                         <button onClick={() => handleStartAnalysis(true)} className="bg-slate-900 hover:bg-slate-800 text-white rounded-xl h-16 px-6 font-bold flex items-center gap-2 transition-all shadow-lg">
-                                            <span className="icon">send</span> Revise
+                                            <span className="icon">send</span> {t('btnRevise')}
                                         </button>
                                     </div>
                                 </div>
@@ -2044,7 +2064,7 @@ const handleAddRecommendedNode = (title, type, isCause) => {
                             </div>
                             <h2 className="text-3xl font-black drop-shadow-md">{activeAiNode.text || 'Unnamed Variable'}</h2>
                             <span className="inline-block mt-2 px-3 py-1 bg-emerald-900/50 rounded-full text-xs font-semibold border border-emerald-500/30">
-                                Type: {activeAiNode.type?.toUpperCase()}
+                                {t('typeLabel')} {activeAiNode.type?.toUpperCase()}
                             </span>
                         </div>
                     </div>
@@ -2223,7 +2243,7 @@ const handleAddRecommendedNode = (title, type, isCause) => {
                             className="flex-1 bg-transparent px-4 outline-none text-sm text-slate-700"
                         />
                             <button onClick={() => handleOpenNodeAi(activeAiNode, true)} className="bg-emerald-600 hover:bg-emerald-700 text-white px-6 font-bold text-sm transition-colors flex items-center gap-2">
-                             <span className="icon text-sm">send</span> Revise
+                             <span className="icon text-sm">send</span> {t('btnRevise')}
                             </button>
                     </div>
                 </div>
