@@ -3,7 +3,7 @@
 > **An interactive, bilingual research framework visualizer** — map variables, model relationships, and get AI-powered analysis for academic research, behavioral science, and systems thinking.
 
 [![Live Demo](https://img.shields.io/badge/Live%20Demo-Open%20App-6366f1?style=for-the-badge&logo=googlechrome&logoColor=white)](YOUR_DEMO_URL_HERE)
-[![License: MIT](https://img.shields.io/badge/License-MIT-10b981?style=for-the-badge)](LICENSE)
+[![License: AGPL v3](https://img.shields.io/badge/License-AGPLv3-10b981?style=for-the-badge)](LICENSE)
 [![Language](https://img.shields.io/badge/Language-EN%20%2F%20ID-f59e0b?style=for-the-badge)](README.md)
 
 ---
