@@ -680,17 +680,22 @@ function App() {
 
             CRITICAL LANGUAGE RULE (POLYGLOT):
             1. Detect the dominant language used in the "name" and "notes" of the variables above.
-            2. You MUST write ALL of your analysis and responses IN THAT DETECTED LANGUAGE. (e.g., if the user data is in English, reply in English. If Spanish, reply in Spanish. If Indonesian, reply in Indonesian).
-            3. ONLY translate the content values. DO NOT translate the JSON keys (e.g., keep "analysis_markdown", "topology_health"). Use the exact keys as the template below.
+            2. You MUST write ALL of your analysis and responses IN THAT DETECTED LANGUAGE.
+            3. ONLY translate the content values. DO NOT translate the JSON keys.
+
+            CRITICAL JSON RULES (STRICT):
+            - You MUST escape ALL double quotes inside your text values (e.g., use \\"quoted word\\").
+            - You MUST escape ALL newlines inside your text values using \\n. 
+            - DO NOT use raw keyboard Enters/line breaks inside the JSON string values.
 
             ${isRevision && aiFeedback ? `\nREVISE WITH THIS INSTRUCTION: ${aiFeedback}` : ''}
 
-            RETURN ONLY A VALID JSON with this exact structure (no markdown backticks):
+            RETURN ONLY A VALID JSON with this exact structure:
             {
               "analysis_markdown": "Detailed Markdown text evaluating the logic and theory of the framework (Headings, Lists, etc).",
               "topology_health":[
                 {
-                  "type": "error", // choose: 'error' (fatal/broken), 'warning' (redundant/weak), or 'info' (strategic)
+                  "type": "error",
                   "title": "Issue Title",
                   "description": "Detailed explanation of the problem",
                   "icon": "link_off" 
@@ -844,9 +849,14 @@ const handleApplyRecommendation = () => {
             3. Keep the JSON keys EXACTLY in English. Do NOT translate the keys.
             4. For "youtube_videos", provide 2-4 REAL YouTube Video IDs (exactly 11 characters). DO NOT make up fake IDs.
             
-            ${isRevision && nodeAiPrompt ? `REVISE WITH THIS INSTRUCTION: ${nodeAiPrompt}\n\n` : ''}
+            CRITICAL JSON RULES (STRICT):
+            - You MUST escape ALL double quotes inside your text values (e.g., use \\"quoted word\\").
+            - You MUST escape ALL newlines inside your text values using \\n. 
+            - DO NOT use raw keyboard Enters/line breaks inside the JSON string values.
             
-            RETURN ONLY A VALID JSON with this exact structure (no markdown backticks):
+            ${isRevision && nodeAiPrompt ? `\nREVISE WITH THIS INSTRUCTION: ${nodeAiPrompt}\n\n` : ''}
+            
+            RETURN ONLY A VALID JSON with this exact structure:
             {
               "insight": "Detailed Markdown text containing: 1. Theoretical Definition, 2. Measurement Metrics, 3. Potential Biases",
               "scholar_papers":[
