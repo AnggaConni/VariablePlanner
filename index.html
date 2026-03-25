@@ -46,6 +46,137 @@
         .ai-markdown li { margin-bottom: 0.5em; }
         .ai-markdown strong { color: #0f172a; font-weight: 800; }
         .ai-markdown em { background: #f1f5f9; padding: 0.1rem 0.4rem; border-radius: 0.25rem; font-style: normal; color: #3b82f6; font-family: monospace; font-size: 0.85rem;}
+    
+        /* ── Guide Modal ──────────────────────────────────────── */
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(16px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fade-in-up { animation: fadeInUp 0.22s cubic-bezier(0.22, 1, 0.36, 1) both; }
+
+        .guide-scrollbar::-webkit-scrollbar       { width: 4px; }
+        .guide-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .guide-scrollbar::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 4px; }
+
+        .guide-section {
+            border-bottom: 1px solid #f1f5f9;
+            padding-bottom: 1.25rem;
+            margin-bottom: 1.25rem;
+        }
+        .guide-section-header {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 0.75rem;
+        }
+        .guide-icon {
+            width: 36px; height: 36px;
+            border-radius: 10px;
+            display: flex; align-items: center; justify-content: center;
+            flex-shrink: 0;
+            font-size: 20px;
+        }
+        .guide-title {
+            font-size: 1rem;
+            font-weight: 700;
+            color: #1e293b;
+        }
+        .guide-body {
+            padding-left: 3rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        .guide-body p {
+            font-size: 0.875rem;
+            color: #475569;
+            line-height: 1.65;
+            margin: 0;
+        }
+        .guide-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 0.4rem;
+        }
+        .guide-list li {
+            font-size: 0.875rem;
+            color: #475569;
+            line-height: 1.6;
+            padding-left: 1rem;
+            position: relative;
+        }
+        .guide-list li::before {
+            content: '›';
+            position: absolute;
+            left: 0;
+            color: #94a3b8;
+            font-weight: 700;
+        }
+        .guide-list li b { color: #1e293b; }
+        .guide-body code {
+            background: #f1f5f9;
+            color: #6366f1;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.78rem;
+            padding: 0.1rem 0.35rem;
+            border-radius: 4px;
+        }
+        kbd {
+            display: inline-flex;
+            align-items: center;
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-bottom-width: 2px;
+            border-radius: 5px;
+            padding: 0.05rem 0.45rem;
+            font-size: 0.78rem;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-weight: 600;
+            color: #334155;
+            white-space: nowrap;
+        }
+        .guide-tip {
+            display: flex;
+            align-items: flex-start;
+            gap: 0.5rem;
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-left: 3px solid #818cf8;
+            border-radius: 0 8px 8px 0;
+            padding: 0.6rem 0.85rem;
+            font-size: 0.8rem;
+            color: #475569;
+            line-height: 1.6;
+        }
+        .guide-tip .icon { flex-shrink: 0; margin-top: 1px; }
+        .guide-subtable {
+            display: flex;
+            flex-direction: column;
+            gap: 0.3rem;
+            margin-top: 0.35rem;
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 0.6rem 0.75rem;
+        }
+        .guide-subtable-row {
+            display: flex;
+            align-items: baseline;
+            gap: 0.6rem;
+            font-size: 0.8rem;
+            color: #475569;
+        }
+        .guide-subtable-row b { color: #1e293b; min-width: 90px; flex-shrink: 0; }
+        .dot {
+            width: 8px; height: 8px;
+            border-radius: 50%;
+            flex-shrink: 0;
+            margin-top: 3px;
+        }
+    
     </style>
 </head>
 <body>
@@ -398,6 +529,8 @@ function App() {
                 }))
             };
 
+            
+
             const promptText = `Kerangka sistem saya: ${JSON.stringify(frameworkData)}.
             Anda adalah profesor pembimbing. Berikan analisa framework secara keseluruhan. BERIKAN JAWABAN DALAM BAHASA ${promptLang.toUpperCase()}.
             ${isRevision && aiFeedback ? `\nREVISI DENGAN INSTRUKSI INI: ${aiFeedback}` : ''}
@@ -434,13 +567,55 @@ function App() {
             let resultText = data.candidates[0].content.parts[0].text;
             resultText = resultText.replace(/```json/gi, '').replace(/```/g, '').trim();
             
-            setAiAnalysisResult(JSON.parse(resultText));
+            // ─── MULAI KODE PENYADAP AI ───
+            const regex = /\[NEW_VAR:\s*(.*?)\s*\|\s*(.*?)\]/g;
+            let match;
+            const foundVars = [];
+            
+            // Gunakan 'resultText' dari kode asli Anda
+            while ((match = regex.exec(resultText)) !== null) {
+                foundVars.push({ name: match[1].trim(), desc: match[2].trim() });
+            }
+
+            if (foundVars.length > 0) {
+                setNodes(prevNodes => {
+                    const newNodesToAdd = [];
+                    
+                    foundVars.forEach((v, index) => {
+                        const isDuplicate = prevNodes.some(n => n.text.toLowerCase() === v.name.toLowerCase());
+                        
+                        if (!isDuplicate) {
+                            newNodesToAdd.push({
+                                id: 'node-ai-' + Date.now() + index,
+                                text: v.name,
+                                type: 'independent', // Beri tipe default agar tidak error di kanvas
+                                notes: '🤖 AI Idea: ' + v.desc, // Masuk ke Dictionary / Notes
+                                x: (-panZoom.x + 400 + (index * 60)) / panZoom.scale, // Posisi di tengah layar
+                                y: (-panZoom.y + 300 + (index * 60)) / panZoom.scale,
+                            });
+                        }
+                    });
+                    
+                    if (newNodesToAdd.length > 0) {
+                        setTimeout(() => alert(`✨ Keajaiban AI: Menambahkan ${newNodesToAdd.length} variabel baru dari analisa ke kanvas Anda!`), 800);
+                        return [...prevNodes, ...newNodesToAdd];
+                    }
+                    return prevNodes;
+                });
+            }
+            // ─── AKHIR KODE PENYADAP AI ───
+
+            // Bersihkan teks dari tag [NEW_VAR] agar tidak merusak JSON asli
+            const cleanResultText = resultText.replace(/\[NEW_VAR:\s*(.*?)\s*\|\s*(.*?)\]/g, '').trim();
+
+            setAiAnalysisResult(JSON.parse(cleanResultText));
             if (isRevision) setAiFeedback(''); 
 
         } catch (error) {
             console.error(error);
+            // ... (Bagian catch error asli milik Anda tanpa kode penyadap) ...
             setAiAnalysisResult({
-                analysis_markdown: `**Error:** Gagal terhubung dengan AI.\n\n**Sistem Google mengatakan:** *${error.message}*\n\n**Solusi:** Kemungkinan API Key Anda tidak valid, salah ketik, atau kuota habis. Silakan klik **Ikon Kunci (Key) berwarna kuning** di pojok kanan atas layar ini untuk memasukkan API Key yang baru.`,
+                analysis_markdown: `**Error:** Gagal terhubung dengan AI.\n\n**Sistem Google mengatakan:** *${error.message}*`,
                 topology_health: [],
                 recommendations: []
             });
@@ -555,8 +730,6 @@ function App() {
         }
     };
 
-    // [BAGIAN MODAL YANG DIUBAH DI DALAM render() BAWAH]
-    // Cari bagian {showAiAnalysis && (...)} dan ganti isinya dengan ini:
 
 const handleAddRecommendedNode = (title, type, isCause) => {
         const newNodeId = `node-${Date.now()}`;
@@ -1574,6 +1747,8 @@ const handleAddRecommendedNode = (title, type, isCause) => {
             <main className="flex-1 mt-16 flex relative">
                 {viewMode === 'input' ? renderInputMode() : renderVisualMode()}
             
+                  </main>
+
             {/* ── MODAL 1: AI CONFIG (BYOK) ── */}
     {showAiConfig && (
         <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
@@ -2001,74 +2176,483 @@ const handleAddRecommendedNode = (title, type, isCause) => {
 
 
     {/* MODAL PANDUAN / USER GUIDE */}
-            {showGuide && (
-                <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-[100] p-4">
-                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl overflow-hidden flex flex-col max-h-[90vh] animate-fade-in-up">
-                        
-                        {/* Header Modal */}
-                        <div className="flex items-center justify-between p-5 border-b border-slate-200 bg-slate-50">
-                            <h2 className="text-xl font-bold flex items-center gap-3 text-slate-800">
-                                <span className="icon text-blue-500 text-3xl">auto_stories</span> 
-                                Panduan Penggunaan / User Guide
-                            </h2>
-                            <button onClick={() => setShowGuide(false)} className="text-slate-400 hover:text-slate-600 bg-slate-200/50 hover:bg-slate-200 p-2 rounded-full transition-all">
-                                <span className="icon">close</span>
-                            </button>
+{showGuide && (
+    <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-[100] p-4">
+        <div className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl overflow-hidden flex flex-col max-h-[90vh] animate-fade-in-up">
+
+            {/* Header Modal */}
+            <div className="flex items-center justify-between p-5 border-b border-slate-200 bg-slate-50 shrink-0">
+                <h2 className="text-xl font-bold flex items-center gap-3 text-slate-800">
+                    <span className="icon text-blue-500 text-3xl">auto_stories</span>
+                    {lang === 'id' ? 'Panduan Penggunaan' : 'User Guide'}
+                </h2>
+                <button onClick={() => setShowGuide(false)} className="text-slate-400 hover:text-slate-600 bg-slate-200/50 hover:bg-slate-200 p-2 rounded-full transition-all">
+                    <span className="icon">close</span>
+                </button>
+            </div>
+
+            {/* Isi Konten */}
+            <div className="p-6 overflow-y-auto guide-scrollbar bg-white space-y-1">
+
+                {lang === 'id' ? (
+                    /* ══════════════════ BAHASA INDONESIA ══════════════════ */
+                    <>
+                        {/* ── SEKSI 1: MEMBUAT VARIABEL ── */}
+                        <div className="guide-section">
+                            <div className="guide-section-header">
+                                <span className="guide-icon bg-emerald-100 text-emerald-600">
+                                    <span className="icon">add_box</span>
+                                </span>
+                                <h3 className="guide-title">Membuat Variabel</h3>
+                            </div>
+                            <div className="guide-body">
+                                <p>Ada dua cara untuk menambahkan variabel baru:</p>
+                                <ul className="guide-list">
+                                    <li>Klik tombol <kbd>+ Tambah Variabel</kbd> di pojok kanan atas panel <b>Data Input</b></li>
+                                    <li>Di mode Visual (Kanvas Bebas), klik tombol <kbd>+ Tambah Variabel</kbd> di sidebar kiri</li>
+                                </ul>
+                                <p>Setelah kotak muncul, isi <b>nama variabel</b>, pilih <b>tipe</b> dari dropdown, lalu tambahkan <b>catatan</b> opsional untuk referensi atau definisi operasional Anda.</p>
+                                <div className="guide-tip">
+                                    <span className="icon icon-sm text-indigo-500">lightbulb</span>
+                                    <span>Anda bisa mengedit teks langsung di dalam kotak node pada tampilan kanvas, tanpa perlu membuka sidebar.</span>
+                                </div>
+                            </div>
                         </div>
 
-                        {/* Isi Konten Panduan */}
-                        <div className="p-6 overflow-y-auto custom-scrollbar bg-white">
-                            
-                            {lang === 'id' ? (
-                                /* 🇮🇩 INDONESIA */
-                                <div className="space-y-6">
-                                    <div className="space-y-2 border-b border-slate-100 pb-6">
-                                        <h3 className="font-bold text-slate-800 text-lg flex items-center gap-2"><span className="icon text-emerald-500">add_box</span> Membuat Variabel</h3>
-                                        <p className="text-sm text-slate-600">Klik tombol <b className="text-slate-800">"Add Node"</b> di panel kiri atau klik ganda (double-click) pada area kanvas kosong untuk membuat kotak variabel baru.</p>
-                                    </div>
-                                    <div className="space-y-2 border-b border-slate-100 pb-6">
-                                        <h3 className="font-bold text-slate-800 text-lg flex items-center gap-2"><span className="icon text-emerald-500">account_tree</span> Menghubungkan Garis</h3>
-                                        <p className="text-sm text-slate-600">Pilih Node awal, lalu tahan tombol <b className="text-slate-800">"Shift"</b> di keyboard dan klik Node tujuan. Anda juga bisa menggunakan menu dropdown "Connections" di sidebar.</p>
-                                    </div>
-                                    <div className="space-y-2 border-b border-slate-100 pb-6">
-                                        <h3 className="font-bold text-slate-800 text-lg flex items-center gap-2"><span className="icon text-emerald-500">smart_toy</span> Analisis AI</h3>
-                                        <p className="text-sm text-slate-600">Klik <b className="text-slate-800">Ikon Robot AI</b> di panel atas untuk menganalisis keseluruhan struktur. Atau, klik <b className="text-slate-800">Ikon Tongkat Sihir</b> di masing-masing kotak untuk riset mendalam per variabel.</p>
-                                    </div>
-                                    <div className="space-y-2 pb-2">
-                                        <h3 className="font-bold text-slate-800 text-lg flex items-center gap-2"><span className="icon text-emerald-500">save</span> Simpan & Ekspor</h3>
-                                        <p className="text-sm text-slate-600">Gunakan menu <b className="text-slate-800">Save JSON</b> untuk menyimpan kemajuan kerja. Gunakan <b className="text-slate-800">Export PNG</b> untuk menyimpan gambar struktur yang presisi.</p>
-                                    </div>
-                                </div>
-                            ) : (
-                                /* 🇬🇧 ENGLISH */
-                                <div className="space-y-6">
-                                    <div className="space-y-2 border-b border-slate-100 pb-6">
-                                        <h3 className="font-bold text-slate-800 text-lg flex items-center gap-2"><span className="icon text-emerald-500">add_box</span> Creating Variables</h3>
-                                        <p className="text-sm text-slate-600">Click the <b className="text-slate-800">"Add Node"</b> button on the left panel or double-click on an empty canvas area to create a new variable box.</p>
-                                    </div>
-                                    <div className="space-y-2 border-b border-slate-100 pb-6">
-                                        <h3 className="font-bold text-slate-800 text-lg flex items-center gap-2"><span className="icon text-emerald-500">account_tree</span> Connecting Nodes</h3>
-                                        <p className="text-sm text-slate-600">Select the starting Node, then hold <b className="text-slate-800">"Shift"</b> on your keyboard and click the target Node. Alternatively, use the "Connections" dropdown in the sidebar.</p>
-                                    </div>
-                                    <div className="space-y-2 border-b border-slate-100 pb-6">
-                                        <h3 className="font-bold text-slate-800 text-lg flex items-center gap-2"><span className="icon text-emerald-500">smart_toy</span> AI Analysis</h3>
-                                        <p className="text-sm text-slate-600">Click the <b className="text-slate-800">AI Robot Icon</b> on the top panel to analyze the entire framework. Or, click the <b className="text-slate-800">Magic Wand Icon</b> inside any box for specific deep-dive research.</p>
-                                    </div>
-                                    <div className="space-y-2 pb-2">
-                                        <h3 className="font-bold text-slate-800 text-lg flex items-center gap-2"><span className="icon text-emerald-500">save</span> Save & Export</h3>
-                                        <p className="text-sm text-slate-600">Use <b className="text-slate-800">Save JSON</b> to save your progress so you can load it later. Use <b className="text-slate-800">Export PNG</b> to save a perfectly centered image of your framework.</p>
-                                    </div>
-                                </div>
-                            )}
-
+                        {/* ── SEKSI 2: TIPE VARIABEL ── */}
+                        <div className="guide-section">
+                            <div className="guide-section-header">
+                                <span className="guide-icon bg-indigo-100 text-indigo-600">
+                                    <span className="icon">category</span>
+                                </span>
+                                <h3 className="guide-title">Tipe Variabel & Kamus</h3>
+                            </div>
+                            <div className="guide-body">
+                                <p>Tersedia lebih dari <b>40 tipe variabel</b>, dibagi dalam 3 kategori:</p>
+                                <ul className="guide-list">
+                                    <li><b>Basic</b> — Variabel umum penelitian: Bebas (X), Terikat (Y), Intervening, Moderator, Kovariat, Kontrol, dll.</li>
+                                    <li><b>Advanced</b> — Untuk SEM, DAG, dan penelitian eksperimental: Laten, Manifest, Mediator, Collider, Eksogen, Endogen, Instrumental, dll.</li>
+                                    <li><b>Statistical</b> — Skala pengukuran dan jenis data: Nominal, Ordinal, Interval, Rasio, Biner, Dummy, Kontinu, dll.</li>
+                                    <li><b>Theory of Change</b> — Input, Aktivitas, Keluaran Langsung, Dampak Jangka Panjang.</li>
+                                    <li><b>COM-B</b> — Kapabilitas, Peluang, Motivasi, Perilaku Target.</li>
+                                </ul>
+                                <p>Buka tab <b>Kamus</b> di sidebar kanan (klik tombol <kbd>Info / Kamus</kbd>) untuk melihat definisi lengkap setiap tipe variabel.</p>
+                            </div>
                         </div>
-                    </div>
-                </div>
-            )}
+
+                        {/* ── SEKSI 3: MENGHUBUNGKAN NODE ── */}
+                        <div className="guide-section">
+                            <div className="guide-section-header">
+                                <span className="guide-icon bg-sky-100 text-sky-600">
+                                    <span className="icon">account_tree</span>
+                                </span>
+                                <h3 className="guide-title">Menghubungkan Variabel</h3>
+                            </div>
+                            <div className="guide-body">
+                                <p>Ada dua cara membuat hubungan antar variabel:</p>
+                                <ul className="guide-list">
+                                    <li><b>Di mode Visual:</b> Klik tombol <kbd>Sambung</kbd> di bagian bawah sebuah node, lalu klik node tujuan. Node yang menunggu koneksi akan bergetar menandakan siap disambung.</li>
+                                    <li><b>Di mode Data Input:</b> Gulir ke bawah ke panel <b>Hubungan / Alur</b>, klik <kbd>+ Tambah Hubungan</kbd>, lalu pilih node asal dan tujuan dari dropdown.</li>
+                                </ul>
+                                <p>Setiap hubungan memiliki <b>tipe relasi</b> dan <b>label</b> opsional. Pilih tipe yang sesuai agar warna dan simbol garis tampil dengan benar di kanvas.</p>
+
+                                <div className="guide-subtable">
+                                    <div className="guide-subtable-row"><span className="dot" style={{background:'#94a3b8'}}></span><b>Netral</b><span>Hubungan umum tanpa arah pengaruh</span></div>
+                                    <div className="guide-subtable-row"><span className="dot" style={{background:'#10b981'}}></span><b>Positif (+)</b><span>Semakin besar X, semakin besar Y</span></div>
+                                    <div className="guide-subtable-row"><span className="dot" style={{background:'#f43f5e'}}></span><b>Negatif (−)</b><span>Semakin besar X, semakin kecil Y</span></div>
+                                    <div className="guide-subtable-row"><span className="dot" style={{background:'#6366f1'}}></span><b>Hipotesis (H)</b><span>Pernyataan dugaan yang akan diuji; gunakan tombol <kbd>H#</kbd> untuk penomoran otomatis</span></div>
+                                    <div className="guide-subtable-row"><span className="dot" style={{background:'#f59e0b'}}></span><b>Dua Arah (↔)</b><span>Kausalitas timbal-balik atau umpan balik</span></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* ── SEKSI 4: NAVIGASI KANVAS ── */}
+                        <div className="guide-section">
+                            <div className="guide-section-header">
+                                <span className="guide-icon bg-amber-100 text-amber-600">
+                                    <span className="icon">open_with</span>
+                                </span>
+                                <h3 className="guide-title">Navigasi Kanvas</h3>
+                            </div>
+                            <div className="guide-body">
+                                <ul className="guide-list">
+                                    <li><b>Pan (geser layar):</b> Klik dan tahan area kosong kanvas, lalu seret.</li>
+                                    <li><b>Zoom:</b> Putar roda scroll mouse, atau gunakan tombol <kbd>+</kbd> / <kbd>−</kbd> di pojok kiri bawah.</li>
+                                    <li><b>Reset tampilan:</b> Klik ikon <kbd>fit_screen</kbd> di panel zoom bawah.</li>
+                                    <li><b>Pindah node:</b> Klik dan tahan bagian <b>header berwarna</b> (strip atas) sebuah node, lalu seret ke posisi baru.</li>
+                                    <li><b>Rapihkan otomatis:</b> Klik tombol <kbd>Auto Arrange</kbd> di panel zoom bawah untuk menata semua node ke posisi kolom semantik.</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        {/* ── SEKSI 5: CANVAS vs FRAMEWORK ── */}
+                        <div className="guide-section">
+                            <div className="guide-section-header">
+                                <span className="guide-icon bg-violet-100 text-violet-600">
+                                    <span className="icon">schema</span>
+                                </span>
+                                <h3 className="guide-title">Kanvas Bebas vs Tampilan Kerangka</h3>
+                            </div>
+                            <div className="guide-body">
+                                <p>Gunakan toggle di bawah navbar untuk berpindah antara dua mode visual:</p>
+                                <ul className="guide-list">
+                                    <li><b>Kanvas Bebas</b> — Posisi node bebas ditentukan sendiri. Ideal saat masih dalam proses eksplorasi dan penyusunan ide.</li>
+                                    <li><b>Tampilan Kerangka</b> — Node otomatis diatur dalam 4 kolom semantik (Anteseden → Bebas → Intervening → Terikat) dengan tampilan neon "cyber" yang rapi. Node tidak bisa digeser manual di mode ini. Cocok untuk presentasi dan ekspor PNG.</li>
+                                </ul>
+                                <div className="guide-tip">
+                                    <span className="icon icon-sm text-violet-500">tips_and_updates</span>
+                                    <span>Untuk hasil PNG terbaik, gunakan <b>Tampilan Kerangka</b> — semua node sudah teratur rapi secara otomatis.</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* ── SEKSI 6: FILTER & PENCARIAN ── */}
+                        <div className="guide-section">
+                            <div className="guide-section-header">
+                                <span className="guide-icon bg-teal-100 text-teal-600">
+                                    <span className="icon">filter_list</span>
+                                </span>
+                                <h3 className="guide-title">Filter & Pencarian</h3>
+                            </div>
+                            <div className="guide-body">
+                                <ul className="guide-list">
+                                    <li><b>Di mode Visual:</b> Bar filter muncul di atas kanvas. Klik chip tipe variabel untuk menyorot hanya node dan garis yang relevan. Node lain akan menjadi transparan.</li>
+                                    <li><b>Di mode Data Input:</b> Gunakan kolom <b>Cari variabel...</b> di bagian atas daftar untuk menyaring node berdasarkan nama.</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        {/* ── SEKSI 7: SIDEBAR ── */}
+                        <div className="guide-section">
+                            <div className="guide-section-header">
+                                <span className="guide-icon bg-rose-100 text-rose-600">
+                                    <span className="icon">view_sidebar</span>
+                                </span>
+                                <h3 className="guide-title">Panel Sidebar Kanan</h3>
+                            </div>
+                            <div className="guide-body">
+                                <p>Klik tombol <kbd>Info / Kamus</kbd> di navbar kanan atas untuk membuka sidebar. Ada 3 tab:</p>
+                                <ul className="guide-list">
+                                    <li><b>Edit Node</b> — Klik node mana saja di kanvas untuk langsung mengedit nama, tipe, dan catatannya di sini. Juga berisi tombol <b>Deep AI Research Report</b> untuk riset mendalam per variabel.</li>
+                                    <li><b>Statistik</b> — Menampilkan total variabel dan hubungan, node paling terhubung, distribusi tipe relasi, dan breakdown tipe variabel dengan bar chart interaktif.</li>
+                                    <li><b>Kamus</b> — Referensi cepat definisi semua 40+ tipe variabel, dikelompokkan per kategori.</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        {/* ── SEKSI 8: AI ANALYZER ── */}
+                        <div className="guide-section">
+                            <div className="guide-section-header">
+                                <span className="guide-icon bg-purple-100 text-purple-600">
+                                    <span className="icon">smart_toy</span>
+                                </span>
+                                <h3 className="guide-title">Analisis AI (Seluruh Kerangka)</h3>
+                            </div>
+                            <div className="guide-body">
+                                <p>Klik ikon robot <kbd>🤖</kbd> di navbar untuk menganalisis keseluruhan framework Anda. Diperlukan <b>API Key Gemini</b> dari Google AI Studio (gratis).</p>
+                                <ul className="guide-list">
+                                    <li><b>Tab Analysis</b> — Evaluasi naratif logika dan kekuatan teoritis kerangka Anda.</li>
+                                    <li><b>Tab Mapping</b> — Pemeriksaan kesehatan topologi: mendeteksi node terisolasi, bottleneck, jalur yang hilang, dan redundansi.</li>
+                                    <li><b>Tab Recommendations</b> — AI menyarankan variabel baru berikut tipe dan alasannya. Klik <kbd>Terima Strategi AI</kbd> untuk menambahkan semua sekaligus ke kanvas. Gunakan kolom revisi untuk meminta AI menyesuaikan sarannya.</li>
+                                </ul>
+                                <div className="guide-tip">
+                                    <span className="icon icon-sm text-purple-500">security</span>
+                                    <span>API Key Anda <b>hanya disimpan di browser lokal</b> (localStorage) dan tidak pernah dikirim ke server selain langsung ke Google.</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* ── SEKSI 9: NODE AI ── */}
+                        <div className="guide-section">
+                            <div className="guide-section-header">
+                                <span className="guide-icon bg-emerald-100 text-emerald-600">
+                                    <span className="icon">biotech</span>
+                                </span>
+                                <h3 className="guide-title">Riset AI Per Variabel</h3>
+                            </div>
+                            <div className="guide-body">
+                                <p>Klik node mana saja → buka tab <b>Edit Node</b> di sidebar → klik <kbd>Deep AI Research Report</kbd>. Ini akan membuka laporan khusus untuk variabel tersebut:</p>
+                                <ul className="guide-list">
+                                    <li><b>Resume & Analisa</b> — Definisi teoritis, metrik pengukuran, dan potensi bias variabel tersebut.</li>
+                                    <li><b>Ekspansi & Rekomendasi</b> — Saran variabel <b>sebab</b> dan <b>akibat</b> dari AI. Klik ikon <kbd>+</kbd> untuk langsung menambahkan ke kanvas beserta garisnya.</li>
+                                    <li><b>Literatur & Media</b> — Judul jurnal Google Scholar, paper PubMed, dan video YouTube yang relevan, semuanya dihasilkan AI dan siap diklik.</li>
+                                </ul>
+                                <p>Gunakan kolom revisi di bagian bawah untuk meminta AI menyesuaikan analisisnya, misalnya: <i>"Carikan jurnal berbahasa Indonesia"</i>.</p>
+                            </div>
+                        </div>
+
+                        {/* ── SEKSI 10: CONTOH DATA ── */}
+                        <div className="guide-section">
+                            <div className="guide-section-header">
+                                <span className="guide-icon bg-amber-100 text-amber-600">
+                                    <span className="icon">folder_special</span>
+                                </span>
+                                <h3 className="guide-title">Contoh Data & Template</h3>
+                            </div>
+                            <div className="guide-body">
+                                <p>Buka menu <kbd>File / Berkas</kbd> di navbar kanan atas untuk memuat contoh data siap pakai:</p>
+                                <ul className="guide-list">
+                                    <li><b>Kerangka Skripsi</b> — Model SEM akademis lengkap dengan anteseden, X1/X2, mediator, moderator, dummy, dan variabel Y dengan edge hipotesis.</li>
+                                    <li><b>Skenario Asmara</b> — Peta logika kausalitas kreatif bertema "cara mendapatkan mantan kembali" — demonstrasi penggunaan bebas alat ini.</li>
+                                    <li><b>Theory of Change</b> — Model Input → Aktivitas → Keluaran → Dampak dengan faktor eksogen.</li>
+                                    <li><b>COM-B Model</b> — Diagnosis ilmu perilaku: Kapabilitas + Peluang + Motivasi → Perilaku.</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        {/* ── SEKSI 11: SIMPAN & EKSPOR ── */}
+                        <div className="guide-section border-none pb-0">
+                            <div className="guide-section-header">
+                                <span className="guide-icon bg-slate-100 text-slate-600">
+                                    <span className="icon">save</span>
+                                </span>
+                                <h3 className="guide-title">Simpan & Ekspor</h3>
+                            </div>
+                            <div className="guide-body">
+                                <ul className="guide-list">
+                                    <li><b>Save JSON</b> — Menyimpan seluruh kanvas (node, garis, dan data AI) sebagai file <code>.json</code>. Gunakan <b>Load JSON</b> untuk memuatnya kembali di sesi berikutnya.</li>
+                                    <li><b>Export PNG</b> — Secara otomatis menengahkan dan menyesuaikan semua node ke dalam bingkai, lalu mengambil gambar resolusi tinggi (2×). Tersedia di kedua mode visual.</li>
+                                </ul>
+                                <div className="guide-tip">
+                                    <span className="icon icon-sm text-slate-500">language</span>
+                                    <span>Tombol <kbd>EN / ID</kbd> di navbar mengubah bahasa seluruh antarmuka sekaligus instruksi yang dikirim ke AI — hasil analisis pun akan menyesuaikan bahasa aktif.</span>
+                                </div>
+                            </div>
+                        </div>
+                    </>
+                ) : (
+                    /* ══════════════════ ENGLISH ══════════════════ */
+                    <>
+                        {/* ── SECTION 1: CREATING VARIABLES ── */}
+                        <div className="guide-section">
+                            <div className="guide-section-header">
+                                <span className="guide-icon bg-emerald-100 text-emerald-600">
+                                    <span className="icon">add_box</span>
+                                </span>
+                                <h3 className="guide-title">Creating Variables</h3>
+                            </div>
+                            <div className="guide-body">
+                                <p>There are two ways to add a new variable:</p>
+                                <ul className="guide-list">
+                                    <li>Click the <kbd>+ Add Variable</kbd> button in the top-right of the <b>Data Input</b> panel</li>
+                                    <li>In Visual mode (Freeform Canvas), use the <kbd>+ Add Variable</kbd> button in the left area</li>
+                                </ul>
+                                <p>Once a card appears, fill in the <b>variable name</b>, choose a <b>type</b> from the dropdown, and optionally add a <b>note</b> for your definition or reference.</p>
+                                <div className="guide-tip">
+                                    <span className="icon icon-sm text-indigo-500">lightbulb</span>
+                                    <span>You can edit text directly inside node cards on the canvas — no need to open the sidebar for quick edits.</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* ── SECTION 2: VARIABLE TYPES ── */}
+                        <div className="guide-section">
+                            <div className="guide-section-header">
+                                <span className="guide-icon bg-indigo-100 text-indigo-600">
+                                    <span className="icon">category</span>
+                                </span>
+                                <h3 className="guide-title">Variable Types & Dictionary</h3>
+                            </div>
+                            <div className="guide-body">
+                                <p>There are over <b>40 variable types</b>, organized into 5 groups:</p>
+                                <ul className="guide-list">
+                                    <li><b>Basic</b> — Core research variables: Independent (X), Dependent (Y), Intervening, Moderator, Covariate, Control, Outcome, Treatment, Baseline, etc.</li>
+                                    <li><b>Advanced</b> — For SEM, DAG, and experimental design: Latent, Manifest, Mediator, Collider, Exogenous, Endogenous, Instrumental, Interaction Term, Lagged, etc.</li>
+                                    <li><b>Statistical</b> — Measurement scales and data types: Nominal, Ordinal, Interval, Ratio, Binary, Dummy, Continuous, Discrete, Residual, etc.</li>
+                                    <li><b>Theory of Change</b> — Input, Activity, Direct Output, Long-term Impact.</li>
+                                    <li><b>COM-B</b> — Capability, Opportunity, Motivation, Target Behavior.</li>
+                                </ul>
+                                <p>Open the <b>Dictionary</b> tab in the right sidebar (click the <kbd>Info / Dictionary</kbd> button) to read the full definition of every type.</p>
+                            </div>
+                        </div>
+
+                        {/* ── SECTION 3: CONNECTING NODES ── */}
+                        <div className="guide-section">
+                            <div className="guide-section-header">
+                                <span className="guide-icon bg-sky-100 text-sky-600">
+                                    <span className="icon">account_tree</span>
+                                </span>
+                                <h3 className="guide-title">Connecting Variables</h3>
+                            </div>
+                            <div className="guide-body">
+                                <p>There are two ways to create a relationship between variables:</p>
+                                <ul className="guide-list">
+                                    <li><b>In Visual mode:</b> Click the <kbd>Connect</kbd> button at the bottom of a node card, then click the target node. The waiting node will pulse to signal it's ready.</li>
+                                    <li><b>In Data Input mode:</b> Scroll to the <b>Relationships / Flow</b> panel, click <kbd>+ Add Relationship</kbd>, then select source and target from the dropdowns.</li>
+                                </ul>
+                                <p>Each relationship has a <b>relation type</b> and an optional <b>label</b>. Picking the right type changes the edge color and symbol on the canvas.</p>
+
+                                <div className="guide-subtable">
+                                    <div className="guide-subtable-row"><span className="dot" style={{background:'#94a3b8'}}></span><b>Neutral</b><span>General flow, no direction of influence stated</span></div>
+                                    <div className="guide-subtable-row"><span className="dot" style={{background:'#10b981'}}></span><b>Positive (+)</b><span>As X increases, Y increases</span></div>
+                                    <div className="guide-subtable-row"><span className="dot" style={{background:'#f43f5e'}}></span><b>Negative (−)</b><span>As X increases, Y decreases</span></div>
+                                    <div className="guide-subtable-row"><span className="dot" style={{background:'#6366f1'}}></span><b>Hypothesis (H)</b><span>A testable proposition; use the <kbd>H#</kbd> button for auto-numbering (H1, H2…)</span></div>
+                                    <div className="guide-subtable-row"><span className="dot" style={{background:'#f59e0b'}}></span><b>Bidirectional (↔)</b><span>Mutual causation or feedback loop</span></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* ── SECTION 4: CANVAS NAVIGATION ── */}
+                        <div className="guide-section">
+                            <div className="guide-section-header">
+                                <span className="guide-icon bg-amber-100 text-amber-600">
+                                    <span className="icon">open_with</span>
+                                </span>
+                                <h3 className="guide-title">Canvas Navigation</h3>
+                            </div>
+                            <div className="guide-body">
+                                <ul className="guide-list">
+                                    <li><b>Pan:</b> Click and drag any empty area of the canvas.</li>
+                                    <li><b>Zoom:</b> Scroll your mouse wheel, or use the <kbd>+</kbd> / <kbd>−</kbd> buttons at the bottom-left of the canvas.</li>
+                                    <li><b>Reset view:</b> Click the <kbd>fit_screen</kbd> icon in the zoom panel.</li>
+                                    <li><b>Move a node:</b> Click and drag the <b>colored header strip</b> at the top of any node card.</li>
+                                    <li><b>Auto arrange:</b> Click <kbd>Auto Arrange</kbd> in the zoom panel to sort all nodes into semantic columns automatically.</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        {/* ── SECTION 5: CANVAS vs FRAMEWORK ── */}
+                        <div className="guide-section">
+                            <div className="guide-section-header">
+                                <span className="guide-icon bg-violet-100 text-violet-600">
+                                    <span className="icon">schema</span>
+                                </span>
+                                <h3 className="guide-title">Freeform Canvas vs Framework View</h3>
+                            </div>
+                            <div className="guide-body">
+                                <p>Use the toggle below the navbar to switch between two visual layouts:</p>
+                                <ul className="guide-list">
+                                    <li><b>Freeform Canvas</b> — You position nodes freely. Best during exploration and ideation. Nodes are draggable.</li>
+                                    <li><b>Framework View</b> — Nodes are automatically arranged into 4 semantic columns (Antecedent → Independent → Intervening → Dependent) in a dark neon "cyber" layout. Nodes cannot be manually dragged. Best for presentations and PNG exports.</li>
+                                </ul>
+                                <div className="guide-tip">
+                                    <span className="icon icon-sm text-violet-500">tips_and_updates</span>
+                                    <span>For the cleanest PNG export, use <b>Framework View</b> — all nodes are perfectly arranged automatically before the screenshot is taken.</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* ── SECTION 6: FILTER & SEARCH ── */}
+                        <div className="guide-section">
+                            <div className="guide-section-header">
+                                <span className="guide-icon bg-teal-100 text-teal-600">
+                                    <span className="icon">filter_list</span>
+                                </span>
+                                <h3 className="guide-title">Filter & Search</h3>
+                            </div>
+                            <div className="guide-body">
+                                <ul className="guide-list">
+                                    <li><b>In Visual mode:</b> A filter bar appears above the canvas. Click any variable type chip to highlight only those nodes and their connected edges. Other nodes fade to transparent.</li>
+                                    <li><b>In Data Input mode:</b> Use the <b>Search variables...</b> field at the top of the variable list to filter cards by name.</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        {/* ── SECTION 7: SIDEBAR ── */}
+                        <div className="guide-section">
+                            <div className="guide-section-header">
+                                <span className="guide-icon bg-rose-100 text-rose-600">
+                                    <span className="icon">view_sidebar</span>
+                                </span>
+                                <h3 className="guide-title">Right Sidebar Panel</h3>
+                            </div>
+                            <div className="guide-body">
+                                <p>Click the <kbd>Info / Dictionary</kbd> button in the top-right navbar to open the sidebar. It has 3 tabs:</p>
+                                <ul className="guide-list">
+                                    <li><b>Edit Node</b> — Click any node on the canvas to instantly edit its name, type, and notes here. Also contains the <b>Deep AI Research Report</b> button for per-variable research.</li>
+                                    <li><b>Statistics</b> — Shows total variables and relationships, most-connected node, relationship type distribution, and variable type breakdown with bar charts.</li>
+                                    <li><b>Dictionary</b> — Quick-reference definitions for all 40+ variable types, grouped by category.</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        {/* ── SECTION 8: AI FRAMEWORK ANALYZER ── */}
+                        <div className="guide-section">
+                            <div className="guide-section-header">
+                                <span className="guide-icon bg-purple-100 text-purple-600">
+                                    <span className="icon">smart_toy</span>
+                                </span>
+                                <h3 className="guide-title">AI Framework Analyzer</h3>
+                            </div>
+                            <div className="guide-body">
+                                <p>Click the robot icon <kbd>🤖</kbd> in the navbar to analyze your entire framework. Requires a <b>Gemini API Key</b> from Google AI Studio (free tier available).</p>
+                                <ul className="guide-list">
+                                    <li><b>Analysis tab</b> — A narrative evaluation of your framework's logic and theoretical strength.</li>
+                                    <li><b>Mapping tab</b> — Topology health checks: detects isolated nodes, bottlenecks, missing paths, and structural redundancies.</li>
+                                    <li><b>Recommendations tab</b> — AI suggests new variables with types and rationale. Click <kbd>Accept AI Strategy</kbd> to add them all to the canvas at once. Use the revision field to guide the AI with custom instructions.</li>
+                                </ul>
+                                <div className="guide-tip">
+                                    <span className="icon icon-sm text-purple-500">security</span>
+                                    <span>Your API key is <b>stored only in your browser's localStorage</b> and is never sent anywhere except directly to Google's API.</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* ── SECTION 9: PER-NODE AI ── */}
+                        <div className="guide-section">
+                            <div className="guide-section-header">
+                                <span className="guide-icon bg-emerald-100 text-emerald-600">
+                                    <span className="icon">biotech</span>
+                                </span>
+                                <h3 className="guide-title">Per-Variable AI Deep Research</h3>
+                            </div>
+                            <div className="guide-body">
+                                <p>Click any node → open the <b>Edit Node</b> tab in the sidebar → click <kbd>Deep AI Research Report</kbd>. This opens a dedicated research modal for that variable:</p>
+                                <ul className="guide-list">
+                                    <li><b>Resume & Analysis</b> — Theoretical definition, measurement metrics, and potential biases for this specific variable.</li>
+                                    <li><b>Expansion & Recommendations</b> — AI-suggested <b>cause</b> variables and <b>effect</b> variables. Click the <kbd>+</kbd> icon on any suggestion to add it to the canvas with a connecting edge already drawn.</li>
+                                    <li><b>Literature & Media</b> — An AI-generated Google Scholar citation, a PubMed paper link, and an embedded YouTube search result — all clickable.</li>
+                                </ul>
+                                <p>Use the revision field at the bottom to ask the AI to adjust its analysis — for example: <i>"Find papers published after 2020"</i> or <i>"Focus on clinical measurement tools"</i>.</p>
+                            </div>
+                        </div>
+
+                        {/* ── SECTION 10: SAMPLE DATA ── */}
+                        <div className="guide-section">
+                            <div className="guide-section-header">
+                                <span className="guide-icon bg-amber-100 text-amber-600">
+                                    <span className="icon">folder_special</span>
+                                </span>
+                                <h3 className="guide-title">Sample Datasets & Templates</h3>
+                            </div>
+                            <div className="guide-body">
+                                <p>Open the <kbd>File / Records</kbd> menu in the top-right navbar to load a ready-made example:</p>
+                                <ul className="guide-list">
+                                    <li><b>Thesis Framework</b> — A complete academic SEM model with antecedent, X1/X2, mediators, moderator, dummy control, and Y variable with hypothesis edges.</li>
+                                    <li><b>Romance Scenario</b> — A creative causal logic map: "How to get your ex back" — showcasing the tool's freeform flexibility.</li>
+                                    <li><b>Theory of Change</b> — Input → Activity → Output → Impact model with exogenous factors.</li>
+                                    <li><b>COM-B Model</b> — Behavioral science diagnostic: Capability + Opportunity + Motivation → Behavior.</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        {/* ── SECTION 11: SAVE & EXPORT ── */}
+                        <div className="guide-section border-none pb-0">
+                            <div className="guide-section-header">
+                                <span className="guide-icon bg-slate-100 text-slate-600">
+                                    <span className="icon">save</span>
+                                </span>
+                                <h3 className="guide-title">Save & Export</h3>
+                            </div>
+                            <div className="guide-body">
+                                <ul className="guide-list">
+                                    <li><b>Save JSON</b> — Saves your entire canvas (nodes, edges, and AI data) as a <code>.json</code> file. Use <b>Load JSON</b> to restore it in a future session.</li>
+                                    <li><b>Export PNG</b> — Auto-centers and fits all nodes into frame, then captures a high-resolution 2× PNG. Works in both visual layouts.</li>
+                                </ul>
+                                <div className="guide-tip">
+                                    <span className="icon icon-sm text-slate-500">language</span>
+                                    <span>The <kbd>EN / ID</kbd> toggle in the navbar switches the entire interface language — including the instructions sent to the AI, so analysis results will also match your active language.</span>
+                                </div>
+                            </div>
+                        </div>
+                    </>
+                )}
+            </div>
+        </div>
+    </div>
+)}
             
-            </main>
-
-
+          
 
             {renderSidebar()}
 
