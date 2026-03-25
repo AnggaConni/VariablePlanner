@@ -483,30 +483,96 @@ const SAMPLES = {
         ]
     },
     SKRIPSI: {
-        nodes: [
-            { id:'s0', text:'Organizational Culture', type:'antecedent', x:-100, y:250, notes:'Background factor shaping X1 & X2' },
-            { id:'s2', text:'Perceived Product Quality (X1)', type:'independent', x:200, y:150, notes:'Independent variable 1' },
-            { id:'s3', text:'Service Reliability (X2)', type:'independent', x:200, y:350, notes:'Independent variable 2' },
-            { id:'s4', text:'Customer Satisfaction (Z1)', type:'intervening', x:500, y:250, notes:'Primary mediator' },
-            { id:'s7', text:'Brand Trust (Z2)', type:'intervening', x:500, y:100, notes:'Secondary mediator' },
-            { id:'s5', text:'Promotional Intensity', type:'moderator', x:500, y:450, notes:'Moderates the relationship between Z1 and Y' },
-            { id:'s8', text:'Switching Cost', type:'exogenous', x:800, y:50, notes:'External factor keeping customers locked in' },
-            { id:'s6', text:'Gender Dummy (0=M, 1=F)', type:'dummy', x:200, y:550, notes:'Control variable' },
-            { id:'s1', text:'Customer Loyalty (Y)', type:'dependent', x:850, y:250, notes:'Dependent outcome' },
-        ],
-        edges: [
-            { id:'es0a', source:'s0', target:'s2', label:'Foundational', direction:'neutral' },
-            { id:'es0b', source:'s0', target:'s3', label:'Foundational', direction:'neutral' },
-            { id:'es1',  source:'s2', target:'s4', label:'H1: Positive Effect (+)', direction:'hypothesis' },
-            { id:'es2',  source:'s3', target:'s4', label:'H2: Positive Effect (+)', direction:'hypothesis' },
-            { id:'es7',  source:'s2', target:'s7', label:'H3: Positive Effect (+)', direction:'hypothesis' },
-            { id:'es3',  source:'s4', target:'s1', label:'H4: Significant Impact', direction:'hypothesis' },
-            { id:'es8',  source:'s7', target:'s1', label:'H5: Significant Impact', direction:'hypothesis' },
-            { id:'es4',  source:'s5', target:'s1', label:'Strengthens', direction:'positive' },
-            { id:'es9',  source:'s8', target:'s1', label:'Forces Retention', direction:'neutral' },
-            { id:'es6',  source:'s6', target:'s1', label:'Controls for Variance', direction:'neutral' },
-        ]
-    }
+    nodes: [
+        {
+            id: 's0',
+            text: 'Founding Mandate Specificity',
+            type: 'antecedent',
+            x: -120, y: 260,
+            notes: 'Operationalized via Hooghe et al. (2017) IO Delegation Dataset. Coded 1–5 scale based on specificity of founding charter objectives. Theoretical basis: Barnett & Finnemore (2004) — vague mandates create bureaucratic discretion, enabling goal displacement over time.'
+        },
+        {
+            id: 's2',
+            text: 'Administrative Cost Ratio (X1)',
+            type: 'independent',
+            x: 200, y: 120,
+            notes: 'UN JIU/REP/2012 definition: (HQ staff costs + governance overhead + internal services) / total approved budget. Data: UN CEB financial statistics 2000–2022. Expected range 18–42% across sampled IOs (WHO, UNHCR, ILO, FAO, UNDP, WFP, UNESCO). H1 direction: negative on Y.'
+        },
+        {
+            id: 's3',
+            text: 'Programmatic Expenditure Ratio (X2)',
+            type: 'independent',
+            x: 200, y: 400,
+            notes: 'Direct mandate-delivery spending as % of total expenditure. Excludes PSC (programme support cost). Source: UN Board of Auditors Annual Reports + individual IO financial reports. Inverse of X1 but not perfectly — some orgs carry large capital or investment expenditures coded separately.'
+        },
+        {
+            id: 's4',
+            text: 'Bureaucratic Autonomy Index (Z1)',
+            type: 'intervening',
+            x: 530, y: 240,
+            notes: 'Adapted from Witztum & Sissenich (2023). Composite: (% secretariat-initiated resolutions) + (staff-to-governing-body ratio) + (inverse of member-state override frequency). Captures whether IO bureaucracy operates as agent or develops autonomous preferences — key to principal-agent drift (Hawkins et al., 2006).'
+        },
+        {
+            id: 's7',
+            text: 'Field-to-HQ Personnel Ratio (Z2)',
+            type: 'intervening',
+            x: 530, y: 60,
+            notes: 'P-staff and GS-staff stationed in country offices vs Geneva/New York/Rome HQ. Source: ICSC Human Resources data + OIOS audit reports. Proxy for operational orientation. UNHCR benchmark ~67% field; WHO historically ~48% (pre-2020 reform target). Lower ratio = structural administrative capture.'
+        },
+        {
+            id: 's5',
+            text: 'Voluntary Contribution Dependency',
+            type: 'moderator',
+            x: 530, y: 460,
+            notes: 'Ratio of earmarked voluntary contributions to total revenue. Source: UN CEB. High earmarking forces compliance overhead (narrative reports, audits, visibility requirements) that inflates X1 independently of IO preference. Moderates X1→Z1 path: even reform-willing IOs face structural admin inflation when donor-dependent. (Weinlich, 2014; Reinsberg et al., 2017)'
+        },
+        {
+            id: 's8',
+            text: 'Member State Governance Fragmentation',
+            type: 'exogenous',
+            x: -120, y: 500,
+            notes: 'Number of formal governing bodies × decision-rule heterogeneity (consensus vs. weighted voting). Source: Hooghe et al. IO dataset. Exogenous institutional design feature set at founding — not responsive to IO performance. Drives administrative complexity independent of mandate. Treated as instrument for X1 in 2SLS robustness check.'
+        },
+        {
+            id: 's9',
+            text: 'IO Age (Years Since Founding)',
+            type: 'covariate',
+            x: 200, y: 580,
+            notes: 'Older IOs accumulate administrative layers (DiMaggio & Powell, 1983 — institutional isomorphism). Included as control. Possible non-linear effect (squared term tested in Model 3). Data: Yearbook of International Organizations (UIA).'
+        },
+        {
+            id: 's6',
+            text: 'IO Mandate Type (0=Normative, 1=Operational)',
+            type: 'dummy',
+            x: 200, y: 260,
+            notes: 'Normative = standard-setting, policy coordination (WTO, IMO, WIPO, ITU). Operational = direct beneficiary delivery (UNHCR, WFP, UNICEF, WHO field). Critical control — operational IOs structurally carry higher field costs, confounding X2. Without this dummy, X2 effect on Y is upward-biased. Coded from Dijkstra (2017) IO typology.'
+        },
+        {
+            id: 's1',
+            text: 'Mandate Effectiveness Score (Y)',
+            type: 'dependent',
+            x: 880, y: 260,
+            notes: 'Composite DV (α = 0.81 in pilot). Three components: (1) Independent Evaluation Office ratings (IEO/IMF, IEG/World Bank, OIOS/UN) — standardized 0–100; (2) Beneficiary reach ratio: actual vs. target population served; (3) Expert survey score (Gutner & Thompson 2010 replication sample, N=34 IOs). PCA used to construct composite. Robustness: tested with each sub-indicator separately in SI.'
+        },
+    ],
+    edges: [
+        { id:'es0a', source:'s0', target:'s2', label:'Mandate vagueness → admin drift', direction:'positive' },
+        { id:'es0b', source:'s0', target:'s3', label:'Clarity → program focus', direction:'positive' },
+        { id:'es_gov', source:'s8', target:'s2', label:'Complexity inflates overhead', direction:'positive' },
+        { id:'es_gov2', source:'s8', target:'s4', label:'Fragments secretariat autonomy', direction:'negative' },
+        { id:'es1', source:'s2', target:'s4', label:'H1: Admin ratio erodes autonomy (−)', direction:'hypothesis' },
+        { id:'es2', source:'s3', target:'s4', label:'H2: Program spending reinforces autonomy (+)', direction:'hypothesis' },
+        { id:'es7', source:'s2', target:'s7', label:'H3: Admin ratio reduces field presence (−)', direction:'hypothesis' },
+        { id:'es3', source:'s4', target:'s1', label:'H4: Bureaucratic autonomy → effectiveness (+)', direction:'hypothesis' },
+        { id:'es8b', source:'s7', target:'s1', label:'H5: Field presence → effectiveness (+)', direction:'hypothesis' },
+        { id:'es_mod', source:'s5', target:'s2', label:'Earmarking inflates admin burden', direction:'positive' },
+        { id:'es_mod2', source:'s5', target:'s4', label:'Moderates autonomy pathway', direction:'negative' },
+        { id:'es6', source:'s6', target:'s1', label:'Controls structural IO type bias', direction:'neutral' },
+        { id:'es9', source:'s9', target:'s2', label:'Institutional age → layering', direction:'positive' },
+        { id:'es9b', source:'s9', target:'s1', label:'Controls for organizational age', direction:'neutral' },
+    ]
+}
+
 };
 
 // ─── APP ──────────────────────────────────────────────────────────────────────
@@ -632,7 +698,9 @@ function App() {
                 {
                   "node_name": "Nama Variabel Saran",
                   "type": "intervening", 
-                  "reason": "Alasan mengapa variabel ini harus ditambahkan"
+                  "reason": "Alasan mengapa variabel ini harus ditambahkan",
+                  "connects_from": "Nama variabel eksisting PENYEBABNYA (opsional, kosongkan jika tidak ada)",
+                  "connects_to": "Nama variabel eksisting YANG DIPENGARUHINYA (opsional, kosongkan jika tidak ada)"
                 }
               ]
             }`;
@@ -669,32 +737,71 @@ function App() {
     };
 
 
-    const handleApplyRecommendation = () => {
+const handleApplyRecommendation = () => {
         // Pengaman 1: Pastikan data benar-benar Array
         if (!Array.isArray(aiAnalysisResult?.recommendations)) {
             alert(t('alertAiFormatErr'));
             return;
         }
 
-        const newNodes = aiAnalysisResult.recommendations.map((rec, index) => {
+        const newNodes = [];
+        const newEdges =[];
+        const timestamp = Date.now();
+
+        aiAnalysisResult.recommendations.forEach((rec, index) => {
             // Pengaman 2: Jika AI mengirim Teks alih-alih Objek
             const isObj = typeof rec === 'object' && rec !== null;
             const recName = isObj ? rec.node_name : (typeof rec === 'string' ? rec : 'Variabel AI');
             const recType = isObj ? rec.type : 'independent';
             const recReason = isObj ? rec.reason : '';
+            
+            const newNodeId = `ai-rec-${timestamp}-${index}`;
 
-            return {
-                id: `ai-rec-${Date.now()}-${index}`,
+            newNodes.push({
+                id: newNodeId,
                 text: recName || 'Variabel Baru',
                 type: VAR_TYPES[recType] ? recType : 'independent',
-                x: (-panZoom.x + 300 + (index * 60)) / panZoom.scale,
-                y: (-panZoom.y + 200 + (index * 60)) / panZoom.scale,
+                x: (-panZoom.x + 300 + (index * 90)) / panZoom.scale,
+                y: (-panZoom.y + 200 + (index * 90)) / panZoom.scale,
                 notes: `AI Suggestion: ${recReason}`
-            };
+            });
+
+            // Otomatis sambungkan garis (Jika AI memberikan info connects_from / connects_to)
+            if (isObj && rec.connects_from) {
+                // Cari node eksisting berdasarkan nama yang diketik AI
+                const sourceNode = nodes.find(n => n.text.toLowerCase().trim() === rec.connects_from.toLowerCase().trim());
+                if (sourceNode) {
+                    newEdges.push({
+                        id: `edge-aifrom-${timestamp}-${index}`,
+                        source: sourceNode.id,
+                        target: newNodeId,
+                        label: 'AI Suggestion',
+                        direction: 'hypothesis' // Menghasilkan garis putus-putus (glowing)
+                    });
+                }
+            }
+
+            if (isObj && rec.connects_to) {
+                // Cari node eksisting berdasarkan nama yang diketik AI
+                const targetNode = nodes.find(n => n.text.toLowerCase().trim() === rec.connects_to.toLowerCase().trim());
+                if (targetNode) {
+                    newEdges.push({
+                        id: `edge-aito-${timestamp}-${index}`,
+                        source: newNodeId,
+                        target: targetNode.id,
+                        label: 'AI Suggestion',
+                        direction: 'hypothesis' // Menghasilkan garis putus-putus (glowing)
+                    });
+                }
+            }
         });
 
         if (newNodes.length > 0) {
-            setNodes(prev => [...prev, ...newNodes]);
+            setNodes(prev =>[...prev, ...newNodes]);
+            // Masukkan juga garisnya ke kanvas jika ada
+            if (newEdges.length > 0) {
+                setEdges(prev => [...prev, ...newEdges]);
+            }
             alert(t('alertRecAdded'));
             setShowAiAnalysis(false); 
         } else {
