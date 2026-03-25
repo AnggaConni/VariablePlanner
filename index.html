@@ -244,6 +244,64 @@ const T = {
     edgeDir_hypothesis: { en: 'Hypothesis (H)', id: 'Hipotesis (H)' },
     edgeDir_bidirectional: { en: 'Bidirectional (↔)', id: 'Dua Arah (↔)' },
     connections: { en: 'connections', id: 'koneksi' },
+
+    // --- TAMBAHAN UNTUK SIDEBAR EDIT ---
+    editNodeTab: { en: 'Edit Node', id: 'Edit Variabel' },
+    clickToEdit: { en: 'Click a variable on the canvas to edit it here.', id: 'Klik sebuah variabel di kanvas untuk mengeditnya di sini.' },
+    varName: { en: 'Variable Name', id: 'Nama Variabel' },
+    varTypeCat: { en: 'Type / Category', id: 'Tipe / Kategori' },
+    notesRef: { en: 'Notes / References', id: 'Catatan / Referensi' },
+    addNotesPlaceholder: { en: 'Add specific notes...', id: 'Tambahkan catatan khusus...' },
+    deleteVar: { en: 'Delete Variable', id: 'Hapus Variabel' },
+    deepAiReport: { en: 'Deep AI Research Report', id: 'Laporan Riset AI Mendalam' },
+
+    // --- TAMBAHAN UNTUK AI CONFIG MODAL ---
+    aiAnalyzerDesc: { en: 'Bring Your Own Key (BYOK)', id: 'Gunakan Kunci API Anda (BYOK)' },
+    apiKeyLabel: { en: 'Gemini API Key', id: 'Kunci API Gemini' },
+    apiFormatError: { en: 'Invalid format. Gemini key must start with "AIzaSy..."', id: 'Format salah. Kunci Gemini harus diawali dengan "AIzaSy..."' },
+    startAnalysis: { en: 'Start Analysis', id: 'Mulai Analisa' },
+    apiDisclaimer: { en: 'Your API key is stored only in your local browser storage and is never sent to any server other than Google directly.', id: 'Kunci API Anda hanya disimpan di browser lokal (Local Storage) dan tidak dikirim ke server manapun selain langsung ke Google.' },
+
+    // --- TAMBAHAN UNTUK AI ANALYSIS MODAL ---
+    analysisReport: { en: 'Analysis Report', id: 'Laporan Analisa' },
+    tabAnalysis: { en: 'Analysis', id: 'Analisa' },
+    tabMapping: { en: 'Mapping', id: 'Pemetaan' },
+    tabRecommendations: { en: 'Recommendations', id: 'Rekomendasi' },
+    aiThinking: { en: 'AI is thinking and analyzing your framework...', id: 'AI sedang berpikir dan menganalisa kerangka Anda...' },
+    aiResultTitle: { en: 'AI Analysis Result', id: 'Hasil Analisis AI' },
+    noDataYet: { en: 'No data yet.', id: 'Belum ada data.' },
+    mappingTitle: { en: 'Relational & Topology Mapping', id: 'Pemetaan Relasi & Topologi' },
+    noTopologyIssue: { en: 'AI found no significant topology issues. The structure looks solid.', id: 'AI tidak menemukan masalah topologi yang signifikan. Struktur terlihat solid.' },
+    proposedChanges: { en: 'Proposed Changes', id: 'Usulan Perbaikan' },
+    noSpecificRecs: { en: 'No specific recommendations yet, or AI format was incorrect. Click Revise below to try again.', id: 'Belum ada rekomendasi spesifik, atau format dari AI kurang sesuai. Anda bisa meminta AI mengulanginya dengan menekan tombol Revise di bawah.' },
+    acceptAiStrategy: { en: 'Accept & Apply Strategy', id: 'Terima Strategi AI' },
+    askAiToRevise: { en: 'Ask AI to Revise Strategy', id: 'Minta AI Merevisi Strategi' },
+    revisePlaceholder: { en: 'Example: Focus recommendations on psychological variables...', id: 'Contoh: Fokuskan rekomendasi pada variabel psikologis...' },
+
+    // --- TAMBAHAN UNTUK NODE AI MODAL ---
+    targetVarAnalysis: { en: 'Target Variable Analysis', id: 'Analisis Variabel Target' },
+    tabInsight: { en: 'Resume & Analysis', id: 'Resume & Analisa' },
+    tabExpansion: { en: 'Expansion & Suggestions', id: 'Ekspansi & Rekomendasi' },
+    tabLiterature: { en: 'Literature & Media', id: 'Literatur & Media' },
+    aiResearching: { en: 'AI is researching across databases...', id: 'AI sedang meriset lintas database...' },
+    aiResearchDesc: { en: 'Crawling PubMed, Scholar, and generating topological suggestions.', id: 'Menyusuri PubMed, Scholar, dan menyusun saran topologi.' },
+    deepReportTitle: { en: 'Deep Research Report', id: 'Laporan Deep Research' },
+    suggestedCauses: { en: 'Suggested Predictors (Causes)', id: 'Prediktor Disarankan (Sebab)' },
+    noCausesFound: { en: 'No predictors suggested.', id: 'Tidak ada saran prediktor.' },
+    suggestedEffects: { en: 'Potential Outcomes (Effects)', id: 'Dampak Lanjutan (Akibat)' },
+    noEffectsFound: { en: 'No outcomes suggested.', id: 'Tidak ada saran dampak lanjutan.' },
+    academicCitations: { en: 'Academic Citations', id: 'Kutipan Akademis' },
+    mediaExplainer: { en: 'Media & Explainer', id: 'Media & Penjelasan' },
+    topResult: { en: 'Top Result', id: 'Hasil Teratas' },
+    videoSourced: { en: 'Video sourced and embedded by AI.', id: 'Video dicari dan dimuat oleh AI.' },
+    reviseNodePlaceholder: { en: 'Ask AI to revise analysis about', id: 'Minta AI merevisi analisa tentang' },
+
+    // --- TAMBAHAN UNTUK FILE MENU (HARDCODED SAMPLES) ---
+    tocTitle: { en: 'Theory of Change', id: 'Teori Perubahan (ToC)' },
+    tocDesc: { en: 'Impact & Logic Architecture', id: 'Arsitektur Dampak & Logika' },
+    combTitle: { en: 'COM-B Model', id: 'Model COM-B' },
+    combDesc: { en: 'Behavioral Science Diagnostic', id: 'Diagnosis Ilmu Perilaku' },
+
 };
 
 // ─── NEON THEMES ──────────────────────────────────────────────────────────────
@@ -1413,10 +1471,9 @@ const handleAddRecommendedNode = (title, type, isCause) => {
 
                 {/* Tab switcher */}
                 <div className="flex border-b border-slate-200 bg-slate-50 shrink-0">
-                    {[
-                        ['dict', t('dictTab'), 'menu_book'], 
+                    {[['dict', t('dictTab'), 'menu_book'], 
                         ['stats', t('statsTab'), 'bar_chart'],
-                        ['edit', 'Edit Node', 'edit'] // Tab baru
+                        ['edit', t('editNodeTab'), 'edit']
                     ].map(([id, label, icon]) => (
                         <button key={id} onClick={() => setSidebarTab(id)}
                             className={`flex-1 flex items-center justify-center gap-2 py-3 text-[11px] font-bold transition-colors border-b-2 ${sidebarTab===id ? 'text-indigo-600 border-indigo-500 bg-white' : 'text-slate-500 border-transparent hover:text-slate-700 hover:bg-white/60'}`}>
@@ -1433,12 +1490,12 @@ const handleAddRecommendedNode = (title, type, isCause) => {
                             {!selectedNode ? (
                                 <div className="text-center py-12 text-slate-400">
                                     <span className="icon text-slate-200 mb-3 block" style={{fontSize:'40px'}}>touch_app</span>
-                                    <p className="text-sm">Klik sebuah variabel di kanvas untuk mengeditnya di sini.</p>
+                                    <p className="text-sm">{t('clickToEdit')}</p>
                                 </div>
                             ) : (
                                 <div className="space-y-4 animate-fade-in-up">
                                     <div>
-                                        <label className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-1 block">Nama Variabel</label>
+                                        <label className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-1 block">{t('varName')}</label>
                                         <textarea 
                                             value={selectedNode.text} 
                                             onChange={e => updateNode(selectedNode.id, 'text', e.target.value)}
@@ -1447,7 +1504,7 @@ const handleAddRecommendedNode = (title, type, isCause) => {
                                         />
                                     </div>
                                     <div>
-                                        <label className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-1 block">Tipe / Kategori</label>
+                                        <label className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-1 block">{t('varTypeCat')}</label>
                                         <select 
                                             value={selectedNode.type} 
                                             onChange={e => updateNode(selectedNode.id, 'type', e.target.value)}
@@ -1462,18 +1519,19 @@ const handleAddRecommendedNode = (title, type, isCause) => {
                                         </select>
                                     </div>
                                     <div>
-                                        <label className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-1 block">Catatan / Referensi</label>
-                                        <textarea 
+                                        <label className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-1 block">{t('notesRef')}</label>
+
+                                        <textarea  
                                             value={selectedNode.notes || ''} 
                                             onChange={e => updateNode(selectedNode.id, 'notes', e.target.value)}
                                             className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs text-slate-600 outline-none focus:ring-2 focus:ring-indigo-500 resize-none h-24"
-                                            placeholder="Tambahkan catatan khusus..."
+                                            placeholder={t('addNotesPlaceholder')}
                                         />
                                     </div>
                                     
                                     <div className="flex gap-2 pt-2 border-t border-slate-100">
                                         <button onClick={() => deleteNode(selectedNode.id)} className="flex-1 bg-red-50 text-red-600 font-bold py-2 rounded-xl border border-red-100 hover:bg-red-100 transition-colors">
-                                            Hapus Variabel
+                                            {t('deleteVar')}
                                         </button>
                                     </div>
 
@@ -1481,7 +1539,7 @@ const handleAddRecommendedNode = (title, type, isCause) => {
                                     <button onClick={() => handleOpenNodeAi(selectedNode)} 
                                         className="w-full mt-2 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white font-bold py-3 px-4 rounded-xl shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2 group">
                                         <span className="icon group-hover:animate-bounce">science</span> 
-                                        Deep AI Research Report
+                                        {t('deepAiReport')}
                                     </button>
                                 </div>
                             )}
@@ -1697,8 +1755,8 @@ const handleAddRecommendedNode = (title, type, isCause) => {
                                         <span className="icon">account_tree</span>
                                     </div>
                                     <div>
-                                        <div className="font-bold text-slate-700 text-sm">Theory of Change</div>
-                                        <div className="text-xs text-slate-500">Arsitektur Dampak & Logika</div>
+                                        <div className="font-bold text-slate-700 text-sm">{t('tocTitle')}</div>
+                                        <div className="text-xs text-slate-500">{t('tocDesc')}</div>
                                     </div>
                                 </button>
 
@@ -1712,8 +1770,8 @@ const handleAddRecommendedNode = (title, type, isCause) => {
                                         <span className="icon">psychology</span>
                                     </div>
                                     <div>
-                                        <div className="font-bold text-slate-700 text-sm">COM-B Model</div>
-                                        <div className="text-xs text-slate-500">Diagnosis Ilmu Perilaku</div>
+                                        <div className="font-bold text-slate-700 text-sm">{t('combTitle')}</div>
+                                        <div className="text-xs text-slate-500">{t('combDesc')}</div>
                                     </div>
                                 </button>
                                 <button onClick={clearData} className="w-full flex items-center gap-3 px-4 py-3 hover:bg-red-50 text-sm font-bold text-red-500 mt-1">
@@ -1759,10 +1817,10 @@ const handleAddRecommendedNode = (title, type, isCause) => {
                     </button>
                     <span className="icon text-5xl mb-2">smart_toy</span>
                     <h2 className="text-xl font-bold">AI Framework Analyzer</h2>
-                    <p className="text-sm text-indigo-100 mt-1">Bring Your Own Key (BYOK)</p>
+                    <p className="text-sm text-indigo-100 mt-1">{t('aiAnalyzerDesc')}</p>
                 </div>
                 <div className="p-6">
-                    <label className="block text-sm font-semibold text-slate-700 mb-2">Gemini API Key</label>
+                    <label className="block text-sm font-semibold text-slate-700 mb-2">{t('apiKeyLabel')}</label>
                     <div className="relative mb-6">
                         <input type="password" 
                             value={geminiKey} 
@@ -1789,7 +1847,7 @@ const handleAddRecommendedNode = (title, type, isCause) => {
                         {/* Pesan Error di bawah input */}
                         {geminiKey.trim() !== '' && !(geminiKey.startsWith('AIzaSy') && geminiKey.length > 35) && (
                             <p className="text-[11px] font-bold text-rose-500 mt-1 absolute -bottom-5 left-1">
-                                Format salah. Kunci Gemini harus diawali dengan "AIzaSy..."
+                                {t('apiKeyLabel')}
                             </p>
                         )}
                     </div>
@@ -1801,9 +1859,9 @@ const handleAddRecommendedNode = (title, type, isCause) => {
                             ? 'bg-slate-300 text-slate-500 cursor-not-allowed' 
                             : 'bg-slate-900 hover:bg-slate-800 text-white shadow-lg'
                         }`}>
-                        <span className="icon">auto_awesome</span> Start Analysis
+                        <span className="icon">auto_awesome</span> {t('startAnalysis')}
                     </button>
-                    <p className="text-xs text-slate-400 text-center mt-4">Kunci API Anda hanya disimpan di browser lokal (Local Storage) dan tidak dikirim ke server manapun selain langsung ke Google.</p>
+                    <p className="text-xs text-slate-400 text-center mt-4">{t('apiDisclaimer')}</p>
                 </div>
             </div>
         </div>
@@ -1820,13 +1878,13 @@ const handleAddRecommendedNode = (title, type, isCause) => {
                         <div className="w-10 h-10 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center">
                             <span className="icon">{isAnalyzing ? 'sync' : 'psychology'}</span>
                         </div>
-                        <h2 className="font-bold text-slate-800 text-lg">Analysis Report</h2>
+                        <h2 className="font-bold text-slate-800 text-lg">{t('analysisReport')}</h2>
                     </div>
                     
                     <div className="flex bg-slate-200/50 p-1 rounded-lg">
-                        <button onClick={() => setAiPage(1)} className={`px-4 py-1.5 rounded-md text-sm font-semibold transition-all ${aiPage === 1 ? 'bg-white shadow-sm text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}>Analysis</button>
-                        <button onClick={() => setAiPage(2)} className={`px-4 py-1.5 rounded-md text-sm font-semibold transition-all ${aiPage === 2 ? 'bg-white shadow-sm text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}>Mapping</button>
-                        <button onClick={() => setAiPage(3)} className={`px-4 py-1.5 rounded-md text-sm font-semibold transition-all ${aiPage === 3 ? 'bg-white shadow-sm text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}>Recommendations</button>
+                        <button onClick={() => setAiPage(1)} className={`px-4 py-1.5 rounded-md text-sm font-semibold transition-all ${aiPage === 1 ? 'bg-white shadow-sm text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}>{t('tabAnalysis')}</button>
+                        <button onClick={() => setAiPage(2)} className={`px-4 py-1.5 rounded-md text-sm font-semibold transition-all ${aiPage === 2 ? 'bg-white shadow-sm text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}>{t('tabMapping')}</button>
+                        <button onClick={() => setAiPage(3)} className={`px-4 py-1.5 rounded-md text-sm font-semibold transition-all ${aiPage === 3 ? 'bg-white shadow-sm text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}>{t('tabRecommendations')}</button>
                     </div>
 
                     <button onClick={() => { setShowAiAnalysis(false); setShowAiConfig(true); }} title="Ubah API Key" className="text-amber-500 hover:text-amber-600 bg-amber-50 hover:bg-amber-100 p-2 rounded-full transition-all flex items-center justify-center">
@@ -1843,7 +1901,7 @@ const handleAddRecommendedNode = (title, type, isCause) => {
                     {isAnalyzing ? (
                         <div className="h-full flex flex-col items-center justify-center text-slate-500">
                             <span className="icon text-6xl animate-spin text-indigo-500 mb-4">progress_activity</span>
-                            <p className="font-medium animate-pulse">AI is thinking and analyzing your framework...</p>
+                            <p className="font-medium animate-pulse">{t('aiThinking')}</p>
                         </div>
                     ) : (
                         <div className="space-y-6">
@@ -1853,12 +1911,12 @@ const handleAddRecommendedNode = (title, type, isCause) => {
                                 <div className="flex flex-col gap-5">
                                     <div className="bg-white p-8 rounded-2xl border border-slate-200 shadow-sm">
                                         <h3 className="font-bold text-slate-800 mb-5 flex items-center gap-2 text-lg">
-                                            <span className="icon text-indigo-500">analytics</span> {lang === 'en' ? 'AI Analysis Result' : 'Hasil Analisis AI'}
+                                            <span className="icon text-indigo-500">analytics</span> {t('aiResultTitle')}
                                         </h3>
                                         <div 
                                             className="ai-markdown"
                                             dangerouslySetInnerHTML={{ 
-                                                __html: window.marked ? window.marked.parse(aiAnalysisResult?.analysis_markdown || 'Belum ada data.') : (aiAnalysisResult?.analysis_markdown || 'Belum ada data.') 
+                                                __html: window.marked ? window.marked.parse(aiAnalysisResult?.analysis_markdown || t('noDataYet')) : (aiAnalysisResult?.analysis_markdown || t('noDataYet')) 
                                             }}
                                         />
                                     </div>
@@ -1870,7 +1928,7 @@ const handleAddRecommendedNode = (title, type, isCause) => {
                                 <div className="flex flex-col gap-4">
                                     <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
                                         <h3 className="font-bold text-slate-800 mb-4 flex items-center gap-2 text-lg">
-                                            <span className="icon text-teal-500">hub</span> {lang === 'en' ? 'Relational & Topology Mapping' : 'Pemetaan Relasi & Topologi'}
+                                            <span className="icon text-teal-500">hub</span> {t('mappingTitle')}
                                         </h3>
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
                                             {aiAnalysisResult?.topology_health?.map((item, idx) => {
@@ -1896,7 +1954,7 @@ const handleAddRecommendedNode = (title, type, isCause) => {
                                                 )
                                             })}
                                             {(!aiAnalysisResult?.topology_health || aiAnalysisResult.topology_health.length === 0) && (
-                                                <p className="text-sm text-slate-500 italic col-span-full py-4 text-center">AI tidak menemukan masalah topologi yang signifikan. Struktur terlihat solid.</p>
+                                                <p className="text-sm text-slate-500 italic col-span-full py-4 text-center">{t('noTopologyIssue')}</p>
                                             )}
                                         </div>
                                     </div>
@@ -1907,7 +1965,7 @@ const handleAddRecommendedNode = (title, type, isCause) => {
                             {aiPage === 3 && (
                                 <div className="flex flex-col h-full gap-4">
                                     <div className="p-6 bg-indigo-50/50 rounded-2xl border border-indigo-100 flex-1">
-                                        <h3 className="font-bold text-xl mb-4 text-indigo-900">{lang === 'en' ? 'Proposed Changes' : 'Usulan Perbaikan'}</h3>
+                                        <h3 className="font-bold text-xl mb-4 text-indigo-900">{t('proposedChanges')}</h3>
                                         <div className="space-y-3 mb-6">
                                             {/* Pengaman Array */}
                                             {Array.isArray(aiAnalysisResult?.recommendations) && aiAnalysisResult.recommendations.map((rec, idx) => {
@@ -1936,7 +1994,7 @@ const handleAddRecommendedNode = (title, type, isCause) => {
                                         
                                         <div className="flex gap-3 mt-6">
                                             <button onClick={handleApplyRecommendation} className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2.5 px-6 rounded-xl flex-1 transition-all shadow-md hover:shadow-lg flex justify-center items-center gap-2">
-                                                <span className="icon">check_circle</span> {lang === 'en' ? 'Accept & Apply Strategy' : 'Terima Strategi AI'}
+                                                <span className="icon">check_circle</span> {t('acceptAiStrategy')}
                                             </button>
                                         </div>
                                     </div>
@@ -1944,11 +2002,11 @@ const handleAddRecommendedNode = (title, type, isCause) => {
                                     {/* Kolom Revisi Prompt */}
                                     <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex items-end gap-3">
                                         <div className="flex-1">
-                                            <label className="text-xs font-bold text-slate-500 mb-1 block">Ask AI to Revise Strategy</label>
+                                            <label className="text-xs font-bold text-slate-500 mb-1 block">{t('askAiToRevise')}</label>
                                             <textarea 
                                                 value={aiFeedback}
                                                 onChange={(e) => setAiFeedback(e.target.value)}
-                                                placeholder="Contoh: Fokuskan rekomendasi pada variabel psikologis, bukan teknis..." 
+                                                placeholder={t('revisePlaceholder')} 
                                                 className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none h-16"
                                             />
                                         </div>
@@ -1982,7 +2040,7 @@ const handleAddRecommendedNode = (title, type, isCause) => {
                         <div>
                             <div className="text-emerald-200 text-sm font-bold tracking-wider uppercase mb-1 flex items-center gap-2">
                                 <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span> 
-                                Target Variable Analysis
+                                {t('targetVarAnalysis')}
                             </div>
                             <h2 className="text-3xl font-black drop-shadow-md">{activeAiNode.text || 'Unnamed Variable'}</h2>
                             <span className="inline-block mt-2 px-3 py-1 bg-emerald-900/50 rounded-full text-xs font-semibold border border-emerald-500/30">
@@ -1994,9 +2052,9 @@ const handleAddRecommendedNode = (title, type, isCause) => {
 
                 {/* Tabs Navigation */}
                 <div className="flex px-6 py-3 border-b border-slate-100 bg-slate-50 gap-2 shrink-0 overflow-x-auto">
-                    <button onClick={() => setNodeAiTab('insight')} className={`px-5 py-2 rounded-xl text-sm font-bold transition-all flex items-center gap-2 ${nodeAiTab === 'insight' ? 'bg-emerald-100 text-emerald-800 shadow-sm border border-emerald-200' : 'text-slate-500 hover:bg-slate-200/50'}`}><span className="icon text-base">summarize</span> Resume & Analisa</button>
-                    <button onClick={() => setNodeAiTab('expansion')} className={`px-5 py-2 rounded-xl text-sm font-bold transition-all flex items-center gap-2 ${nodeAiTab === 'expansion' ? 'bg-emerald-100 text-emerald-800 shadow-sm border border-emerald-200' : 'text-slate-500 hover:bg-slate-200/50'}`}><span className="icon text-base">library_add</span> Ekspansi & Rekomendasi</button>
-                    <button onClick={() => setNodeAiTab('literature')} className={`px-5 py-2 rounded-xl text-sm font-bold transition-all flex items-center gap-2 ${nodeAiTab === 'literature' ? 'bg-emerald-100 text-emerald-800 shadow-sm border border-emerald-200' : 'text-slate-500 hover:bg-slate-200/50'}`}><span className="icon text-base">menu_book</span> Literatur & Media</button>
+                    <button onClick={() => setNodeAiTab('insight')} className={`px-5 py-2 rounded-xl text-sm font-bold transition-all flex items-center gap-2 ${nodeAiTab === 'insight' ? 'bg-emerald-100 text-emerald-800 shadow-sm border border-emerald-200' : 'text-slate-500 hover:bg-slate-200/50'}`}><span className="icon text-base">summarize</span> {t('tabInsight')}</button>
+                    <button onClick={() => setNodeAiTab('expansion')} className={`px-5 py-2 rounded-xl text-sm font-bold transition-all flex items-center gap-2 ${nodeAiTab === 'expansion' ? 'bg-emerald-100 text-emerald-800 shadow-sm border border-emerald-200' : 'text-slate-500 hover:bg-slate-200/50'}`}><span className="icon text-base">library_add</span> {t('tabExpansion')}</button>
+                    <button onClick={() => setNodeAiTab('literature')} className={`px-5 py-2 rounded-xl text-sm font-bold transition-all flex items-center gap-2 ${nodeAiTab === 'literature' ? 'bg-emerald-100 text-emerald-800 shadow-sm border border-emerald-200' : 'text-slate-500 hover:bg-slate-200/50'}`}><span className="icon text-base">menu_book</span> {t('tabLiterature')}</button>
                 </div>
 
                 {/* Content Area */}
@@ -2004,8 +2062,8 @@ const handleAddRecommendedNode = (title, type, isCause) => {
                     {isNodeAnalyzing ? (
                         <div className="absolute inset-0 flex flex-col items-center justify-center bg-slate-50/80 backdrop-blur-sm z-10 text-emerald-700">
                             <span className="icon text-7xl animate-spin mb-4">radar</span>
-                            <h3 className="text-xl font-bold">AI is researching across databases...</h3>
-                            <p className="text-sm opacity-70 mt-2">Crawling PubMed, Scholar, and generating topological suggestions.</p>
+                            <h3 className="text-xl font-bold">{t('aiResearching')}</h3>
+                            <p className="text-sm opacity-70 mt-2">{t('aiResearchDesc')}</p>
                         </div>
                     ) : (
                         <div className="p-6 h-full">
@@ -2015,12 +2073,12 @@ const handleAddRecommendedNode = (title, type, isCause) => {
                                 <div className="space-y-6 max-w-4xl mx-auto">
                                     <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
                                         <h3 className="text-xl font-bold text-slate-800 mb-4 flex items-center gap-2">
-                                            <span className="icon text-emerald-500">psychology</span> Laporan Deep Research
+                                            <span className="icon text-emerald-500">psychology</span> {t('deepReportTitle')}
                                         </h3>
                                         <div 
                                             className="ai-markdown"
                                             dangerouslySetInnerHTML={{ 
-                                                __html: activeAiNode.aiData ? (window.marked ? window.marked.parse(activeAiNode.aiData.insight) : activeAiNode.aiData.insight) : 'Belum ada analisa.' 
+                                                __html: activeAiNode.aiData ? (window.marked ? window.marked.parse(activeAiNode.aiData.insight) : activeAiNode.aiData.insight) : t('noDataYet') 
                                             }}
                                         />
                                     </div>
@@ -2036,7 +2094,7 @@ const handleAddRecommendedNode = (title, type, isCause) => {
                                         <div>
                                             <div className="flex items-center gap-2 mb-4">
                                                 <span className="icon text-rose-500">arrow_forward</span>
-                                                <h3 className="font-bold text-slate-800 text-lg">{lang === 'en' ? 'Suggested Predictors (Causes)' : 'Prediktor Disarankan (Sebab)'}</h3>
+                                                <h3 className="font-bold text-slate-800 text-lg">{t('suggestedCauses')}</h3>
                                             </div>
                                             <div className="space-y-3">
                                                 {activeAiNode.aiData.causes && activeAiNode.aiData.causes.length > 0 ? (
@@ -2053,7 +2111,7 @@ const handleAddRecommendedNode = (title, type, isCause) => {
                                                         </div>
                                                     ))
                                                 ) : (
-                                                    <p className="text-sm text-slate-400 italic">Tidak ada saran prediktor.</p>
+                                                    <p className="text-sm text-slate-400 italic">{t('noCausesFound')}</p>
                                                 )}
                                             </div>
                                         </div>
@@ -2061,7 +2119,7 @@ const handleAddRecommendedNode = (title, type, isCause) => {
                                         {/* Kolom Consequent (Akibat) */}
                                         <div>
                                             <div className="flex items-center gap-2 mb-4">
-                                                <h3 className="font-bold text-slate-800 text-lg">{lang === 'en' ? 'Potential Outcomes (Effects)' : 'Dampak Lanjutan (Akibat)'}</h3>
+                                                <h3 className="font-bold text-slate-800 text-lg">{t('suggestedEffects')}</h3>
                                                 <span className="icon text-teal-500">arrow_forward</span>
                                             </div>
                                             <div className="space-y-3">
@@ -2079,7 +2137,7 @@ const handleAddRecommendedNode = (title, type, isCause) => {
                                                         </div>
                                                     ))
                                                 ) : (
-                                                    <p className="text-sm text-slate-400 italic">Tidak ada saran dampak lanjutan.</p>
+                                                    <p className="text-sm text-slate-400 italic">{t('noEffectsFound')}</p>
                                                 )}
                                             </div>
                                         </div>
@@ -2093,7 +2151,7 @@ const handleAddRecommendedNode = (title, type, isCause) => {
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-5xl mx-auto">
                                         {/* Kolom Jurnal (Otomatis dari AI) */}
                                         <div className="space-y-4">
-                                            <h3 className="font-bold text-slate-800 text-lg flex items-center gap-2 mb-4"><span className="icon text-blue-600">school</span> Academic Citations</h3>
+                                            <h3 className="font-bold text-slate-800 text-lg flex items-center gap-2 mb-4"><span className="icon text-blue-600">school</span> {t('academicCitations')}</h3>
                                             
                                             {/* Scholar Card */}
                                             <a href={`https://scholar.google.com/scholar?q=${encodeURIComponent(activeAiNode.aiData.scholar_paper)}`} target="_blank" rel="noopener noreferrer" className="block bg-white p-5 rounded-2xl shadow-sm border border-slate-200 hover:shadow-md hover:border-blue-300 transition-all group">
@@ -2118,7 +2176,7 @@ const handleAddRecommendedNode = (title, type, isCause) => {
 
                                         {/* Kolom Video / Media (Auto Embed Player) */}
                                         <div>
-                                            <h3 className="font-bold text-slate-800 text-lg flex items-center gap-2 mb-4"><span className="icon text-red-500">smart_display</span> Media & Explainer</h3>
+                                            <h3 className="font-bold text-slate-800 text-lg flex items-center gap-2 mb-4"><span className="icon text-red-500">smart_display</span> {t('mediaExplainer')}</h3>
                                             
                                             <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden hover:shadow-lg transition-all">
                                                 {/* Kotak Iframe Video Youtube */}
@@ -2134,8 +2192,8 @@ const handleAddRecommendedNode = (title, type, isCause) => {
                                                 </div>
                                                 <div className="p-4 flex items-center justify-between">
                                                     <div>
-                                                        <h4 className="font-bold text-slate-800 text-sm">Top Result: "{activeAiNode.aiData.youtube_query}"</h4>
-                                                        <div className="text-xs text-slate-500 mt-1">Video dicari dan dimuat oleh AI.</div>
+                                                        <h4 className="font-bold text-slate-800 text-sm">{t('topResult')}: "{activeAiNode.aiData.youtube_query}"</h4>
+                                                        <div className="text-xs text-slate-500 mt-1">{t('videoSourced')}</div>
                                                     </div>
                                                     {/* Tombol Pindah ke Tab Baru YouTube */}
                                                     <a href={`https://www.youtube.com/results?search_query=${encodeURIComponent(activeAiNode.aiData.youtube_query)}`} target="_blank" rel="noopener noreferrer" className="w-10 h-10 bg-red-50 text-red-600 rounded-full flex items-center justify-center hover:bg-red-100 transition-colors shrink-0" title="Buka di YouTube">
@@ -2333,7 +2391,7 @@ const handleAddRecommendedNode = (title, type, isCause) => {
                             <div className="guide-body">
                                 <p>Klik tombol <kbd>Info / Kamus</kbd> di navbar kanan atas untuk membuka sidebar. Ada 3 tab:</p>
                                 <ul className="guide-list">
-                                    <li><b>Edit Node</b> — Klik node mana saja di kanvas untuk langsung mengedit nama, tipe, dan catatannya di sini. Juga berisi tombol <b>Deep AI Research Report</b> untuk riset mendalam per variabel.</li>
+                                    <li><b>Edit Node</b> — Klik node mana saja di kanvas untuk langsung mengedit nama, tipe, dan catatannya di sini. Juga berisi tombol <b>{t('deepAiReport')}</b> untuk riset mendalam per variabel.</li>
                                     <li><b>Statistik</b> — Menampilkan total variabel dan hubungan, node paling terhubung, distribusi tipe relasi, dan breakdown tipe variabel dengan bar chart interaktif.</li>
                                     <li><b>Kamus</b> — Referensi cepat definisi semua 40+ tipe variabel, dikelompokkan per kategori.</li>
                                 </ul>
@@ -2371,7 +2429,7 @@ const handleAddRecommendedNode = (title, type, isCause) => {
                                 <h3 className="guide-title">Riset AI Per Variabel</h3>
                             </div>
                             <div className="guide-body">
-                                <p>Klik node mana saja → buka tab <b>Edit Node</b> di sidebar → klik <kbd>Deep AI Research Report</kbd>. Ini akan membuka laporan khusus untuk variabel tersebut:</p>
+                                <p>Klik node mana saja → buka tab <b>Edit Node</b> di sidebar → klik <kbd>{t('deepAiReport')}</kbd>. Ini akan membuka laporan khusus untuk variabel tersebut:</p>
                                 <ul className="guide-list">
                                     <li><b>Resume & Analisa</b> — Definisi teoritis, metrik pengukuran, dan potensi bias variabel tersebut.</li>
                                     <li><b>Ekspansi & Rekomendasi</b> — Saran variabel <b>sebab</b> dan <b>akibat</b> dari AI. Klik ikon <kbd>+</kbd> untuk langsung menambahkan ke kanvas beserta garisnya.</li>
@@ -2559,7 +2617,7 @@ const handleAddRecommendedNode = (title, type, isCause) => {
                             <div className="guide-body">
                                 <p>Click the <kbd>Info / Dictionary</kbd> button in the top-right navbar to open the sidebar. It has 3 tabs:</p>
                                 <ul className="guide-list">
-                                    <li><b>Edit Node</b> — Click any node on the canvas to instantly edit its name, type, and notes here. Also contains the <b>Deep AI Research Report</b> button for per-variable research.</li>
+                                    <li><b>Edit Node</b> — Click any node on the canvas to instantly edit its name, type, and notes here. Also contains the <b>{t('deepAiReport')}</b> button for per-variable research.</li>
                                     <li><b>Statistics</b> — Shows total variables and relationships, most-connected node, relationship type distribution, and variable type breakdown with bar charts.</li>
                                     <li><b>Dictionary</b> — Quick-reference definitions for all 40+ variable types, grouped by category.</li>
                                 </ul>
@@ -2575,7 +2633,7 @@ const handleAddRecommendedNode = (title, type, isCause) => {
                                 <h3 className="guide-title">AI Framework Analyzer</h3>
                             </div>
                             <div className="guide-body">
-                                <p>Click the robot icon <kbd>🤖</kbd> in the navbar to analyze your entire framework. Requires a <b>Gemini API Key</b> from Google AI Studio (free tier available).</p>
+                                <p>Click the robot icon <kbd>🤖</kbd> in the navbar to analyze your entire framework. Requires a <b>{t('apiKeyLabel')}</b> from Google AI Studio (free tier available).</p>
                                 <ul className="guide-list">
                                     <li><b>Analysis tab</b> — A narrative evaluation of your framework's logic and theoretical strength.</li>
                                     <li><b>Mapping tab</b> — Topology health checks: detects isolated nodes, bottlenecks, missing paths, and structural redundancies.</li>
@@ -2597,7 +2655,7 @@ const handleAddRecommendedNode = (title, type, isCause) => {
                                 <h3 className="guide-title">Per-Variable AI Deep Research</h3>
                             </div>
                             <div className="guide-body">
-                                <p>Click any node → open the <b>Edit Node</b> tab in the sidebar → click <kbd>Deep AI Research Report</kbd>. This opens a dedicated research modal for that variable:</p>
+                                <p>Click any node → open the <b>Edit Node</b> tab in the sidebar → click <kbd>{t('deepAiReport')}</kbd>. This opens a dedicated research modal for that variable:</p>
                                 <ul className="guide-list">
                                     <li><b>Resume & Analysis</b> — Theoretical definition, measurement metrics, and potential biases for this specific variable.</li>
                                     <li><b>Expansion & Recommendations</b> — AI-suggested <b>cause</b> variables and <b>effect</b> variables. Click the <kbd>+</kbd> icon on any suggestion to add it to the canvas with a connecting edge already drawn.</li>
