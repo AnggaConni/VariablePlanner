@@ -1100,14 +1100,18 @@ const handleAddRecommendedNode = (title, type, isCause) => {
         });
         return positions;
     };
-    const getFrameworkPositions = () => getPositions({ x:380, y:150 });
+    const getFrameworkPositions = () => getPositions({ x:400, y:240 });
+
     const handleAutoArrange = () => {
-        const positions = getPositions({ x:440, y:210 });
+        // PERBAIKAN: Jarak X (kanan-kiri) dan Y (atas-bawah) diperbesar agar tidak tabrakan
+        const positions = getPositions({ x: 480, y: 300 }); 
         setNodes(prev => prev.map(n => ({ ...n, x: positions[n.id]?.x ?? n.x, y: positions[n.id]?.y ?? n.y })));
-        const cols = [[], [], [], []];
+        const cols = [[], [],[], []];
         nodes.forEach(n => cols[getCol(n.type)].push(n));
         const maxH = Math.max(...cols.map(c => c.length));
-        setPanZoom({ x: 40, y: 40, scale: Math.min(1, 700 / (maxH * 210 + 200)) });
+        
+        // PERBAIKAN: Zoom-out otomatis disesuaikan dengan jarak tinggi yang baru
+        setPanZoom({ x: 60, y: 80, scale: Math.min(1, 700 / (maxH * 300 + 100)) });
     };
 
     // ── next hypothesis number ──
