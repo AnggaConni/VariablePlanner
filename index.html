@@ -593,9 +593,7 @@ function App() {
 
         setIsAnalyzing(true);
         setAiPage(1); 
-        
-        const promptLang = lang === 'en' ? 'English' : 'Indonesian';
-
+                
         try {
             const frameworkData = {
                 variables: nodes.map(n => ({ name: n.text, type: n.type, notes: n.notes })),
@@ -610,25 +608,31 @@ function App() {
             
 
             const promptText = `Kerangka sistem saya: ${JSON.stringify(frameworkData)}.
-            Anda adalah profesor pembimbing. Berikan analisa framework secara keseluruhan. BERIKAN JAWABAN DALAM BAHASA ${promptLang.toUpperCase()}.
+            Anda adalah profesor pembimbing. Berikan analisa framework secara keseluruhan.
+            
+            PENTING - ATURAN BAHASA (POLYGLOT):
+            1. Identifikasi bahasa dominan yang digunakan user pada Nama Variabel dan Catatan di atas.
+            2. Tuliskan seluruh isi analisa/jawaban Anda DALAM BAHASA TERSEBUT (misal: jika user mengetik dalam bahasa Spanyol, jawab full dalam bahasa Spanyol. Jika Jerman, jawab Jerman).
+            3. HANYA terjemahkan isinya (value). JANGAN PERNAH menerjemahkan key/properti JSON (seperti "analysis_markdown", "topology_health"). Tetap gunakan key persis seperti template di bawah.
+
             ${isRevision && aiFeedback ? `\nREVISI DENGAN INSTRUKSI INI: ${aiFeedback}` : ''}
 
             KEMBALIKAN HANYA VALID JSON dengan struktur berikut (tanpa backtick markdown):
             {
               "analysis_markdown": "Teks Markdown detail evaluasi logika dan teori kerangka (Heading, List, dll).",
-              "topology_health": [
+              "topology_health":[
                 {
                   "type": "error", // pilih: 'error' (fatal/putus), 'warning' (redundant/lemah), atau 'info' (strategis)
                   "title": "Judul Isu",
-                  "description": "Penjelasan detail masalah (misal: variabel X menggantung, atau terjadi efek bottleneck di Y)",
-                  "icon": "link_off" // nama icon: link_off, warning, alt_route, hub, dll
+                  "description": "Penjelasan detail masalah",
+                  "icon": "link_off" 
                 }
               ],
-              "recommendations": [
+              "recommendations":[
                 {
-                  "node_name": "Nama Variabel Saran (Maksimal 3 kata)",
+                  "node_name": "Nama Variabel Saran",
                   "type": "intervening", 
-                  "reason": "Alasan singkat mengapa variabel ini harus ditambahkan ke kanvas"
+                  "reason": "Alasan mengapa variabel ini harus ditambahkan"
                 }
               ]
             }`;
@@ -645,45 +649,7 @@ function App() {
             let resultText = data.candidates[0].content.parts[0].text;
             resultText = resultText.replace(/```json/gi, '').replace(/```/g, '').trim();
             
-            // ─── MULAI KODE PENYADAP AI ───
-            const regex = /\[NEW_VAR:\s*(.*?)\s*\|\s*(.*?)\]/g;
-            let match;
-            const foundVars = [];
-            
-            // Gunakan 'resultText' dari kode asli Anda
-            while ((match = regex.exec(resultText)) !== null) {
-                foundVars.push({ name: match[1].trim(), desc: match[2].trim() });
-            }
-
-            if (foundVars.length > 0) {
-                setNodes(prevNodes => {
-                    const newNodesToAdd = [];
-                    
-                    foundVars.forEach((v, index) => {
-                        const isDuplicate = prevNodes.some(n => n.text.toLowerCase() === v.name.toLowerCase());
-                        
-                        if (!isDuplicate) {
-                            newNodesToAdd.push({
-                                id: 'node-ai-' + Date.now() + index,
-                                text: v.name,
-                                type: 'independent', // Beri tipe default agar tidak error di kanvas
-                                notes: '🤖 AI Idea: ' + v.desc, // Masuk ke Dictionary / Notes
-                                x: (-panZoom.x + 400 + (index * 60)) / panZoom.scale, // Posisi di tengah layar
-                                y: (-panZoom.y + 300 + (index * 60)) / panZoom.scale,
-                            });
-                        }
-                    });
-                    
-                    if (newNodesToAdd.length > 0) {
-                        setTimeout(() => alert(t('alertAiSuccess')), 800);
-                        return [...prevNodes, ...newNodesToAdd];
-                    }
-                    return prevNodes;
-                });
-            }
-            // ─── AKHIR KODE PENYADAP AI ───
-
-            // Bersihkan teks dari tag [NEW_VAR] agar tidak merusak JSON asli
+                        // Bersihkan teks dari tag [NEW_VAR] agar tidak merusak JSON asli
             const cleanResultText = resultText.replace(/\[NEW_VAR:\s*(.*?)\s*\|\s*(.*?)\]/g, '').trim();
 
             setAiAnalysisResult(JSON.parse(cleanResultText));
@@ -748,14 +714,16 @@ function App() {
 
         setIsNodeAnalyzing(true);
 
-        // Deteksi bahasa aktif untuk instruksi AI
-        const promptLang = lang === 'en' ? 'English' : 'Indonesian';
-
         try {
-            const promptText = `Anda adalah asisten peneliti ahli. Analisa variabel penelitian ini. BERIKAN JAWABAN DALAM BAHASA ${promptLang.toUpperCase()}:
+            const promptText = `Anda adalah asisten peneliti ahli. Analisa variabel penelitian ini:
             Nama: "${node.text}"
             Tipe: "${node.type}"
             Catatan: "${node.notes || '-'}"
+            
+            PENTING - ATURAN BAHASA (POLYGLOT):
+            1. Identifikasi bahasa apa yang digunakan user pada Nama dan Catatan di atas.
+            2. Berikan seluruh analisa/jawaban Anda DALAM BAHASA TERSEBUT.
+            3. HANYA terjemahkan isi teksnya. JANGAN menerjemahkan key/properti JSON. Tetap gunakan format key bahasa Inggris di bawah ini.
             
             ${isRevision && nodeAiPrompt ? `REVISI DENGAN INSTRUKSI INI: ${nodeAiPrompt}\n\n` : ''}
             
@@ -767,16 +735,14 @@ function App() {
               "pubmed_paper": "Satu judul paper sains asli yang relevan",
               "pubmed_author": "Nama Penulis (Tahun)",
               "youtube_query": "Kata kunci pencarian youtube spesifik",
-              "causes": [
-                { "title": "Nama Variabel Sebab 1", "type": "exogenous", "reason": "Alasan singkat" },
-                { "title": "Nama Variabel Sebab 2", "type": "independent", "reason": "Alasan singkat" }
+              "causes":[
+                { "title": "Nama Variabel Sebab 1", "type": "exogenous", "reason": "Alasan singkat" }
               ],
-              "effects": [
-                { "title": "Nama Variabel Akibat 1", "type": "dependent", "reason": "Alasan singkat" },
-                { "title": "Nama Variabel Akibat 2", "type": "impact", "reason": "Alasan singkat" }
+              "effects":[
+                { "title": "Nama Variabel Akibat 1", "type": "dependent", "reason": "Alasan singkat" }
               ]
             }
-            Catatan: Untuk 'type' pada causes/effects, pilih dari: exogenous, independent, intervening, moderator, dependent, impact. Jika tidak yakin, gunakan 'independent' (untuk sebab) atau 'dependent' (untuk akibat).`;
+            Catatan: Untuk 'type' pada causes/effects, pilih dari: exogenous, independent, intervening, moderator, dependent, impact.`;
 
             const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${geminiKey}`, {
                 method: 'POST',
