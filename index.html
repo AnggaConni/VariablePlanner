@@ -599,6 +599,8 @@ function App() {
     const [isNodeAnalyzing, setIsNodeAnalyzing] = React.useState(false);
     const [nodeAiPrompt, setNodeAiPrompt] = React.useState('');
     const [nodeAiResult, setNodeAiResult] = React.useState(''); // State baru untuk hasil Per Node
+    const [activeMediaIdx, setActiveMediaIdx] = React.useState(0);
+    const [isPlayingMedia, setIsPlayingMedia] = React.useState(false);
 
     const [edges, setEdges] = useState([]);
     const [viewMode, setViewMode] = useState('visual');
@@ -816,6 +818,8 @@ const handleApplyRecommendation = () => {
         setActiveAiNode(node);
         setShowNodeAiModal(true);
         setNodeAiTab('insight');
+        setActiveMediaIdx(0);
+        setIsPlayingMedia(false);
 
         if (node.aiData && !isRevision) return;
 
@@ -827,29 +831,33 @@ const handleApplyRecommendation = () => {
             Tipe: "${node.type}"
             Catatan: "${node.notes || '-'}"
             
-            PENTING - ATURAN BAHASA (POLYGLOT):
-            1. Identifikasi bahasa apa yang digunakan user pada Nama dan Catatan di atas.
-            2. Berikan seluruh analisa/jawaban Anda DALAM BAHASA TERSEBUT.
-            3. HANYA terjemahkan isi teksnya. JANGAN menerjemahkan key/properti JSON. Tetap gunakan format key bahasa Inggris di bawah ini.
+            PENTING - ATURAN (POLYGLOT & DATA):
+            1. Jawab full dalam bahasa yang digunakan user pada input Nama/Catatan di atas.
+            2. JANGAN terjemahkan key/properti JSON. Tetap gunakan format key bahasa Inggris.
+            3. Untuk "youtube_videos", berikan 2-4 ID Video YouTube ASLI (tepat 11 karakter). JANGAN mengarang ID video.
             
             ${isRevision && nodeAiPrompt ? `REVISI DENGAN INSTRUKSI INI: ${nodeAiPrompt}\n\n` : ''}
             
-            KEMBALIKAN HANYA VALID JSON dengan struktur persis seperti ini (tanpa backtick markdown):
+            KEMBALIKAN HANYA VALID JSON dengan struktur ini (tanpa markdown):
             {
               "insight": "Teks Markdown detail yang memuat: 1. Definisi Teoritis, 2. Metrik Pengukuran, 3. Potensi Bias",
-              "scholar_paper": "Satu judul jurnal akademik asli paling relevan",
-              "scholar_author": "Nama Penulis (Tahun)",
-              "pubmed_paper": "Satu judul paper sains asli yang relevan",
-              "pubmed_author": "Nama Penulis (Tahun)",
-              "youtube_query": "Kata kunci pencarian youtube spesifik",
-              "causes":[
-                { "title": "Nama Variabel Sebab 1", "type": "exogenous", "reason": "Alasan singkat" }
+              "scholar_papers":[
+                { "title": "Judul Jurnal 1", "author": "Penulis Utama dkk", "year": "2023", "link_query": "kata kunci jurnal spesifik 1" },
+                { "title": "Judul Jurnal 2", "author": "Penulis Utama dkk", "year": "2020", "link_query": "kata kunci jurnal spesifik 2" }
               ],
-              "effects":[
-                { "title": "Nama Variabel Akibat 1", "type": "dependent", "reason": "Alasan singkat" }
-              ]
+              "pubmed_papers":[
+                { "title": "Judul Paper Sains 1", "author": "Penulis", "year": "2022", "link_query": "kata kunci paper sains 1" },
+                { "title": "Judul Paper Sains 2", "author": "Penulis", "year": "2019", "link_query": "kata kunci paper sains 2" }
+              ],
+              "youtube_videos":[
+                { "title": "Teori Penjelasan Lengkap", "video_id": "ID_VIDEO_11_KARAKTER", "channel": "Nama Channel" },
+                { "title": "Metode Analisa & Studi Kasus", "video_id": "ID_VIDEO_11_KARAKTER", "channel": "Nama Channel" },
+                { "title": "Pembahasan Lanjutan", "video_id": "ID_VIDEO_11_KARAKTER", "channel": "Nama Channel" }
+              ],
+              "causes":[ { "title": "Sebab 1", "type": "exogenous", "reason": "Alasan singkat" } ],
+              "effects":[ { "title": "Akibat 1", "type": "dependent", "reason": "Alasan singkat" } ]
             }
-            Catatan: Untuk 'type' pada causes/effects, pilih dari: exogenous, independent, intervening, moderator, dependent, impact.`;
+            Catatan tipe untuk causes/effects: exogenous, independent, intervening, moderator, dependent, impact.`;
 
             const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${geminiKey}`, {
                 method: 'POST',
@@ -2244,63 +2252,165 @@ const handleAddRecommendedNode = (title, type, isCause) => {
                             )}
 
                             {/* TAB 3: LITERATURE & MEDIA */}
-                                {nodeAiTab === 'literature' && activeAiNode.aiData && (
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-5xl mx-auto">
-                                        {/* Kolom Jurnal (Otomatis dari AI) */}
-                                        <div className="space-y-4">
-                                            <h3 className="font-bold text-slate-800 text-lg flex items-center gap-2 mb-4"><span className="icon text-blue-600">school</span> {t('academicCitations')}</h3>
-                                            
-                                            {/* Scholar Card */}
-                                            <a href={`https://scholar.google.com/scholar?q=${encodeURIComponent(activeAiNode.aiData.scholar_paper)}`} target="_blank" rel="noopener noreferrer" className="block bg-white p-5 rounded-2xl shadow-sm border border-slate-200 hover:shadow-md hover:border-blue-300 transition-all group">
-                                                <div className="flex justify-between items-start mb-2">
-                                                    <div className="px-2 py-1 bg-blue-100 text-blue-700 text-xs font-bold rounded flex items-center gap-1"><span className="icon text-xs">search</span> Google Scholar</div>
-                                                    <span className="icon text-slate-300 group-hover:text-blue-500">open_in_new</span>
-                                                </div>
-                                                <div className="font-bold text-blue-600 group-hover:underline text-base leading-snug">{activeAiNode.aiData.scholar_paper}</div>
-                                                <p className="text-sm text-slate-500 mt-2">{activeAiNode.aiData.scholar_author}</p>
-                                            </a>
-
-                                            {/* PubMed Card */}
-                                            <a href={`https://pubmed.ncbi.nlm.nih.gov/?term=${encodeURIComponent(activeAiNode.aiData.pubmed_paper)}`} target="_blank" rel="noopener noreferrer" className="block bg-white p-5 rounded-2xl shadow-sm border border-slate-200 hover:shadow-md hover:border-slate-800 transition-all group">
-                                                <div className="flex justify-between items-start mb-2">
-                                                    <div className="px-2 py-1 bg-slate-800 text-white text-xs font-bold rounded flex items-center gap-1"><span className="icon text-xs">health_and_safety</span> PubMed</div>
-                                                    <span className="icon text-slate-300 group-hover:text-slate-800">open_in_new</span>
-                                                </div>
-                                                <div className="font-bold text-slate-700 group-hover:underline text-base leading-snug">{activeAiNode.aiData.pubmed_paper}</div>
-                                                <p className="text-sm text-slate-500 mt-2">{activeAiNode.aiData.pubmed_author}</p>
-                                            </a>
+                            {nodeAiTab === 'literature' && activeAiNode.aiData && (
+                                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 max-w-6xl mx-auto">
+                                    
+                                    {/* --- KOLOM KIRI: JURNAL & PAPER (MULTIPLE) --- */}
+                                    <div className="space-y-6">
+                                        {/* Google Scholar */}
+                                        <div>
+                                            <h3 className="font-bold text-slate-800 text-lg flex items-center gap-2 mb-3">
+                                                <span className="icon text-blue-600">school</span> {t('academicCitations')}
+                                            </h3>
+                                            <div className="space-y-3">
+                                                {(Array.isArray(activeAiNode.aiData.scholar_papers) ? activeAiNode.aiData.scholar_papers : (activeAiNode.aiData.scholar_paper ?[{title: activeAiNode.aiData.scholar_paper, author: activeAiNode.aiData.scholar_author}] :[])).map((item, i) => (
+                                                    <a key={`scholar-${i}`} href={`https://scholar.google.com/scholar?q=${encodeURIComponent(item.link_query || item.title)}`} target="_blank" rel="noopener noreferrer" className="block bg-white p-4 rounded-xl shadow-sm border border-slate-200 hover:shadow-md hover:border-blue-300 transition-all group">
+                                                        <div className="flex justify-between items-start mb-1.5">
+                                                            <div className="px-2 py-0.5 bg-blue-50 text-blue-700 text-[10px] font-bold rounded flex items-center gap-1 border border-blue-100"><span className="icon text-[11px]">search</span> Scholar</div>
+                                                            <span className="icon text-slate-300 group-hover:text-blue-500 icon-sm">open_in_new</span>
+                                                        </div>
+                                                        <div className="font-bold text-blue-700 group-hover:underline text-sm leading-snug">{item.title}</div>
+                                                        <p className="text-xs text-slate-500 mt-1.5 flex justify-between">
+                                                            <span>{item.author}</span>
+                                                            <span className="font-semibold">{item.year ? `(${item.year})` : ''}</span>
+                                                        </p>
+                                                    </a>
+                                                ))}
+                                            </div>
                                         </div>
 
-                                        {/* Kolom Video / Media (Auto Embed Player) */}
+                                        {/* PubMed */}
                                         <div>
-                                            <h3 className="font-bold text-slate-800 text-lg flex items-center gap-2 mb-4"><span className="icon text-red-500">smart_display</span> {t('mediaExplainer')}</h3>
-                                            
-                                            <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden hover:shadow-lg transition-all">
-                                                {/* Kotak Iframe Video Youtube */}
-                                                <div className="relative w-full aspect-video bg-slate-900 border-b border-slate-200">
-                                                    <iframe 
-                                                        src={`https://www.youtube.com/embed?listType=search&list=${encodeURIComponent(activeAiNode.aiData.youtube_query)}`}
-                                                        title="YouTube video player" 
-                                                        frameBorder="0" 
-                                                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
-                                                        allowFullScreen
-                                                        className="absolute top-0 left-0 w-full h-full"
-                                                    ></iframe>
-                                                </div>
-                                                <div className="p-4 flex items-center justify-between">
-                                                    <div>
-                                                        <h4 className="font-bold text-slate-800 text-sm">{t('topResult')}: "{activeAiNode.aiData.youtube_query}"</h4>
-                                                        <div className="text-xs text-slate-500 mt-1">{t('videoSourced')}</div>
-                                                    </div>
-                                                    {/* Tombol Pindah ke Tab Baru YouTube */}
-                                                    <a href={`https://www.youtube.com/results?search_query=${encodeURIComponent(activeAiNode.aiData.youtube_query)}`} target="_blank" rel="noopener noreferrer" className="w-10 h-10 bg-red-50 text-red-600 rounded-full flex items-center justify-center hover:bg-red-100 transition-colors shrink-0" title="Buka di YouTube">
-                                                        <span className="icon">open_in_new</span>
+                                            <h3 className="font-bold text-slate-800 text-lg flex items-center gap-2 mb-3">
+                                                <span className="icon text-slate-700">health_and_safety</span> PubMed Papers
+                                            </h3>
+                                            <div className="space-y-3">
+                                                {(Array.isArray(activeAiNode.aiData.pubmed_papers) ? activeAiNode.aiData.pubmed_papers : (activeAiNode.aiData.pubmed_paper ?[{title: activeAiNode.aiData.pubmed_paper, author: activeAiNode.aiData.pubmed_author}] :[])).map((item, i) => (
+                                                    <a key={`pubmed-${i}`} href={`https://pubmed.ncbi.nlm.nih.gov/?term=${encodeURIComponent(item.link_query || item.title)}`} target="_blank" rel="noopener noreferrer" className="block bg-white p-4 rounded-xl shadow-sm border border-slate-200 hover:shadow-md hover:border-slate-800 transition-all group">
+                                                        <div className="flex justify-between items-start mb-1.5">
+                                                            <div className="px-2 py-0.5 bg-slate-800 text-white text-[10px] font-bold rounded flex items-center gap-1"><span className="icon text-[11px]">science</span> PubMed</div>
+                                                            <span className="icon text-slate-300 group-hover:text-slate-800 icon-sm">open_in_new</span>
+                                                        </div>
+                                                        <div className="font-bold text-slate-800 group-hover:underline text-sm leading-snug">{item.title}</div>
+                                                        <p className="text-xs text-slate-500 mt-1.5 flex justify-between">
+                                                            <span>{item.author}</span>
+                                                            <span className="font-semibold">{item.year ? `(${item.year})` : ''}</span>
+                                                        </p>
                                                     </a>
-                                                </div>
+                                                ))}
                                             </div>
                                         </div>
                                     </div>
-                                )}
+
+                                    {/* --- KOLOM KANAN: YOUTUBE MEDIA CAROUSEL --- */}
+                                    <div className="flex flex-col">
+                                        <h3 className="font-bold text-slate-800 text-lg flex items-center gap-2 mb-3">
+                                            <span className="icon text-red-500">smart_display</span> {t('mediaExplainer')}
+                                        </h3>
+                                        
+                                        {(() => {
+                                            // Pengaman jika memuat file save lama
+                                            const ytVideos = Array.isArray(activeAiNode.aiData.youtube_videos) 
+                                                ? activeAiNode.aiData.youtube_videos 
+                                                : (activeAiNode.aiData.youtube_query ?[{ title: "Hasil Pencarian Topik", video_id: "", channel: "YouTube Search" }] :[]);
+                                            
+                                            if (ytVideos.length === 0) return <div className="text-sm text-slate-400 italic">Belum ada media video.</div>;
+                                            
+                                            const currentVideo = ytVideos[activeMediaIdx];
+                                            const hasId = currentVideo.video_id && currentVideo.video_id.length === 11;
+                                            
+                                            return (
+                                                <div className="relative w-full aspect-video bg-slate-950 rounded-2xl overflow-hidden shadow-lg group border border-slate-200/50">
+                                                    {isPlayingMedia && hasId ? (
+                                                        <iframe 
+                                                            src={`https://www.youtube.com/embed/${currentVideo.video_id}?autoplay=1`} 
+                                                            className="absolute inset-0 w-full h-full" 
+                                                            frameBorder="0" 
+                                                            allow="autoplay; encrypted-media; picture-in-picture" 
+                                                            allowFullScreen>
+                                                        </iframe>
+                                                    ) : (
+                                                        <>
+                                                            {/* Thumbnail Pintar */}
+                                                            <img 
+                                                                src={hasId ? `https://img.youtube.com/vi/${currentVideo.video_id}/maxresdefault.jpg` : 'https://images.unsplash.com/photo-1611162617474-5b21e879e113?q=80&w=1000&auto=format&fit=crop'} 
+                                                                alt="Thumbnail" 
+                                                                className="absolute inset-0 w-full h-full object-cover opacity-70 group-hover:scale-105 transition-all duration-700"
+                                                                onError={(e) => { e.target.src = 'https://images.unsplash.com/photo-1611162617474-5b21e879e113?q=80&w=1000&auto=format&fit=crop'; }}
+                                                            />
+                                                            
+                                                            {/* Gradient Overlay seperti di foto Anda */}
+                                                            <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/20 to-black/30 pointer-events-none"></div>
+
+                                                            {/* Info Teks Bawah */}
+                                                            <div className="absolute bottom-0 left-0 right-0 p-6 pointer-events-none">
+                                                                <h4 className="text-white text-lg lg:text-xl font-bold leading-snug drop-shadow-lg line-clamp-2">{currentVideo.title}</h4>
+                                                                <p className="text-slate-300 text-sm mt-1 drop-shadow-md flex items-center gap-1.5">
+                                                                    <span className="icon text-[14px]">account_circle</span> {currentVideo.channel}
+                                                                </p>
+                                                            </div>
+
+                                                            {/* Tombol Play Kustom di Tengah */}
+                                                            <button 
+                                                                onClick={() => {
+                                                                    if (hasId) setIsPlayingMedia(true);
+                                                                    else window.open(`https://www.youtube.com/results?search_query=${encodeURIComponent(currentVideo.title)}`, '_blank');
+                                                                }}
+                                                                className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-16 h-16 bg-red-600 rounded-full flex items-center justify-center text-white hover:scale-110 hover:bg-red-500 transition-all shadow-[0_0_25px_rgba(220,38,38,0.7)] z-20 cursor-pointer"
+                                                            >
+                                                                <span className="icon text-4xl ml-1">{hasId ? 'play_arrow' : 'search'}</span>
+                                                            </button>
+
+                                                            {/* Navigasi Kiri Kanan Carousel */}
+                                                            {ytVideos.length > 1 && (
+                                                                <>
+                                                                    <button 
+                                                                        onClick={(e) => { e.stopPropagation(); setActiveMediaIdx(prev => prev === 0 ? ytVideos.length - 1 : prev - 1); setIsPlayingMedia(false); }}
+                                                                        className="absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 bg-black/50 hover:bg-black/80 border border-white/10 text-white rounded-full flex items-center justify-center backdrop-blur transition-all z-20"
+                                                                    >
+                                                                        <span className="icon text-2xl pr-0.5">chevron_left</span>
+                                                                    </button>
+                                                                    <button 
+                                                                        onClick={(e) => { e.stopPropagation(); setActiveMediaIdx(prev => prev === ytVideos.length - 1 ? 0 : prev + 1); setIsPlayingMedia(false); }}
+                                                                        className="absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 bg-black/50 hover:bg-black/80 border border-white/10 text-white rounded-full flex items-center justify-center backdrop-blur transition-all z-20"
+                                                                    >
+                                                                        <span className="icon text-2xl pl-0.5">chevron_right</span>
+                                                                    </button>
+                                                                </>
+                                                            )}
+                                                            
+                                                            {/* Tombol Link Eksternal (Pojok Kanan Atas) */}
+                                                            <a 
+                                                                href={hasId ? `https://www.youtube.com/watch?v=${currentVideo.video_id}` : `https://www.youtube.com/results?search_query=${encodeURIComponent(currentVideo.title)}`}
+                                                                target="_blank" rel="noopener noreferrer" 
+                                                                className="absolute top-4 right-4 w-10 h-10 bg-black/40 hover:bg-white hover:text-black border border-white/20 text-white rounded-full flex items-center justify-center backdrop-blur transition-all z-20"
+                                                                title="Buka di Tab Baru"
+                                                            >
+                                                                <span className="icon icon-sm">open_in_new</span>
+                                                            </a>
+                                                        </>
+                                                    )}
+                                                </div>
+                                            );
+                                        })()}
+
+                                        {/* Indikator Dots Bawah */}
+                                        {Array.isArray(activeAiNode.aiData.youtube_videos) && activeAiNode.aiData.youtube_videos.length > 1 && (
+                                            <div className="flex justify-center gap-2 mt-4">
+                                                {activeAiNode.aiData.youtube_videos.map((_, i) => (
+                                                    <button key={i} onClick={() => { setActiveMediaIdx(i); setIsPlayingMedia(false); }}
+                                                        className={`h-2 rounded-full transition-all ${i === activeMediaIdx ? 'bg-red-500 w-6 shadow-[0_0_8px_rgba(220,38,38,0.5)]' : 'bg-slate-300 hover:bg-slate-400 w-2'}`}></button>
+                                                ))}
+                                            </div>
+                                        )}
+
+                                        {/* Teks Catatan */}
+                                        <p className="text-[11px] text-slate-500 mt-4 bg-slate-100 p-3 rounded-xl border border-slate-200/60 leading-relaxed text-center">
+                                            Video dikurasi otomatis oleh AI. Jika video error (<i>Private / Unavailable</i>), gunakan tombol <span className="icon text-[11px] align-middle px-1">open_in_new</span> di pojok kanan atas untuk memutar langsung di YouTube.
+                                        </p>
+                                    </div>
+                                </div>
+                            )}
 
                         </div>
                     )}
