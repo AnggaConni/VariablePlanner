@@ -332,6 +332,7 @@ function App() {
     const [sidebarTab, setSidebarTab] = useState('dict');
     const [showMenu, setShowMenu] = useState(false);
     const [isExporting, setIsExporting] = useState(false);
+    const [showGuide, setShowGuide] = React.useState(false);
 
     const [panZoom, setPanZoom] = useState({ x: 60, y: 60, scale: 1 });
     const [isPanning, setIsPanning] = useState(false);
@@ -379,12 +380,13 @@ function App() {
         setShowAiConfig(false);
         setShowAiAnalysis(true);
 
-        // JIKA SUDAH ADA HASIL & BUKAN REVISI -> JANGAN FETCH ULANG
         if (aiAnalysisResult && !isRevision) return;
 
         setIsAnalyzing(true);
         setAiPage(1); 
         
+        const promptLang = lang === 'en' ? 'English' : 'Indonesian';
+
         try {
             const frameworkData = {
                 variables: nodes.map(n => ({ name: n.text, type: n.type, notes: n.notes })),
@@ -396,9 +398,29 @@ function App() {
                 }))
             };
 
-            const promptText = isRevision && aiFeedback 
-                ? `Kerangka saya: ${JSON.stringify(frameworkData)}. Revisi analisa sebelumnya dengan instruksi ini: ${aiFeedback}` 
-                : `Kerangka saya: ${JSON.stringify(frameworkData)}. Bertindaklah sebagai profesor pembimbing. Berikan: 1) Kekuatan struktur, 2) Kelemahan/Cacat Logika, 3) Rekomendasi Perbaikan. Gunakan Markdown (Header, List, Bold).`;
+            const promptText = `Kerangka sistem saya: ${JSON.stringify(frameworkData)}.
+            Anda adalah profesor pembimbing. Berikan analisa framework secara keseluruhan. BERIKAN JAWABAN DALAM BAHASA ${promptLang.toUpperCase()}.
+            ${isRevision && aiFeedback ? `\nREVISI DENGAN INSTRUKSI INI: ${aiFeedback}` : ''}
+
+            KEMBALIKAN HANYA VALID JSON dengan struktur berikut (tanpa backtick markdown):
+            {
+              "analysis_markdown": "Teks Markdown detail evaluasi logika dan teori kerangka (Heading, List, dll).",
+              "topology_health": [
+                {
+                  "type": "error", // pilih: 'error' (fatal/putus), 'warning' (redundant/lemah), atau 'info' (strategis)
+                  "title": "Judul Isu",
+                  "description": "Penjelasan detail masalah (misal: variabel X menggantung, atau terjadi efek bottleneck di Y)",
+                  "icon": "link_off" // nama icon: link_off, warning, alt_route, hub, dll
+                }
+              ],
+              "recommendations": [
+                {
+                  "node_name": "Nama Variabel Saran (Maksimal 3 kata)",
+                  "type": "intervening", 
+                  "reason": "Alasan singkat mengapa variabel ini harus ditambahkan ke kanvas"
+                }
+              ]
+            }`;
 
             const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${geminiKey}`, {
                 method: 'POST',
@@ -409,17 +431,58 @@ function App() {
             const data = await response.json();
             if (!response.ok) throw new Error(data.error?.message || 'Failed');
             
-            setAiAnalysisResult(data.candidates[0].content.parts[0].text);
-            if (isRevision) setAiFeedback(''); // Bersihkan input revisi
+            let resultText = data.candidates[0].content.parts[0].text;
+            resultText = resultText.replace(/```json/gi, '').replace(/```/g, '').trim();
+            
+            setAiAnalysisResult(JSON.parse(resultText));
+            if (isRevision) setAiFeedback(''); 
 
         } catch (error) {
-            setAiAnalysisResult("**Error:** Gagal memproses AI. " + error.message);
+            console.error(error);
+            setAiAnalysisResult({
+                analysis_markdown: `**Error:** Gagal terhubung dengan AI.\n\n**Sistem Google mengatakan:** *${error.message}*\n\n**Solusi:** Kemungkinan API Key Anda tidak valid, salah ketik, atau kuota habis. Silakan klik **Ikon Kunci (Key) berwarna kuning** di pojok kanan atas layar ini untuk memasukkan API Key yang baru.`,
+                topology_health: [],
+                recommendations: []
+            });
         } finally {
             setIsAnalyzing(false);
         }
     };
 
-    
+
+    const handleApplyRecommendation = () => {
+        // Pengaman 1: Pastikan data benar-benar Array
+        if (!Array.isArray(aiAnalysisResult?.recommendations)) {
+            alert("Format rekomendasi dari AI kurang tepat. Silakan klik tombol 'Revise' untuk menyuruh AI mengulanginya.");
+            return;
+        }
+
+        const newNodes = aiAnalysisResult.recommendations.map((rec, index) => {
+            // Pengaman 2: Jika AI mengirim Teks alih-alih Objek
+            const isObj = typeof rec === 'object' && rec !== null;
+            const recName = isObj ? rec.node_name : (typeof rec === 'string' ? rec : 'Variabel AI');
+            const recType = isObj ? rec.type : 'independent';
+            const recReason = isObj ? rec.reason : '';
+
+            return {
+                id: `ai-rec-${Date.now()}-${index}`,
+                text: recName || 'Variabel Baru',
+                type: VAR_TYPES[recType] ? recType : 'independent',
+                x: (-panZoom.x + 300 + (index * 60)) / panZoom.scale,
+                y: (-panZoom.y + 200 + (index * 60)) / panZoom.scale,
+                notes: `AI Suggestion: ${recReason}`
+            };
+        });
+
+        if (newNodes.length > 0) {
+            setNodes(prev => [...prev, ...newNodes]);
+            alert(`Berhasil menambahkan ${newNodes.length} variabel rekomendasi AI ke dalam kanvas!`);
+            setShowAiAnalysis(false); 
+        } else {
+            alert("Tidak ada rekomendasi node baru dari AI.");
+        }
+    };
+
     // ── FUNGSI AI ANALYZER (PER NODE / JSON DATA) ───────────────────────────────────
     const handleOpenNodeAi = async (node, isRevision = false) => {
         if (!geminiKey) return alert("Masukkan API Key di menu atas terlebih dahulu.");
@@ -491,6 +554,7 @@ function App() {
             setIsNodeAnalyzing(false);
         }
     };
+
     // [BAGIAN MODAL YANG DIUBAH DI DALAM render() BAWAH]
     // Cari bagian {showAiAnalysis && (...)} dan ganti isinya dengan ini:
 
@@ -527,39 +591,104 @@ const handleAddRecommendedNode = (title, type, isCause) => {
         alert(`Berhasil menambahkan: ${title}`);
     };
 
-    // ── export PNG ──
+// ── export PNG ──
     const handleExportPNG = async () => {
-        if (!exportAreaRef.current) return;
-        setIsExporting(true); setShowMenu(false);
+        if (!exportAreaRef.current || nodes.length === 0) return;
+        setShowMenu(false);
+
+        // 1. Simpan posisi layar saat ini
+        const oldPanZoom = { ...panZoom };
+
+        // 2. Kalkulasi batas ujung-ke-ujung semua node (Bounding Box)
+        let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+        const isFramework = visualLayout === 'framework';
+        const posData = isFramework ? getFrameworkPositions() : null;
+
+        nodes.forEach(n => {
+            const nx = isFramework ? (posData[n.id]?.x ?? n.x) : n.x;
+            const ny = isFramework ? (posData[n.id]?.y ?? n.y) : n.y;
+            if (nx < minX) minX = nx;
+            if (ny < minY) minY = ny;
+            if (nx > maxX) maxX = nx;
+            if (ny > maxY) maxY = ny;
+        });
+
+        // 3. Hitung skala dan posisi tengah yang sempurna
+        const padding = 120; // Ruang kosong di pinggir gambar
+        const contentWidth = (maxX - minX) + 320; // 320px estimasi lebar node & garis
+        const contentHeight = (maxY - minY) + 200; // 200px estimasi tinggi node
+
+        const viewWidth = exportAreaRef.current.clientWidth;
+        const viewHeight = exportAreaRef.current.clientHeight;
+
+        const scaleX = viewWidth / (contentWidth + padding * 2);
+        const scaleY = viewHeight / (contentHeight + padding * 2);
+        const newScale = Math.min(scaleX, scaleY, 1.2); // Maksimal zoom 1.2x agar tidak pecah
+
+        const newX = (viewWidth - (contentWidth * newScale)) / 2 - (minX * newScale) + (padding * newScale);
+        const newY = (viewHeight - (contentHeight * newScale)) / 2 - (minY * newScale) + (padding * newScale);
+
+        // 4. Terapkan posisi ke tengah dan nyalakan Loading
+        setPanZoom({ x: newX, y: newY, scale: newScale });
+        setIsExporting(true);
+
+        // 5. Tunggu 500ms agar animasi transisi CSS selesai, baru difoto
         setTimeout(async () => {
             try {
                 const canvas = await html2canvas(exportAreaRef.current, {
                     backgroundColor: visualLayout === 'framework' ? '#020617' : '#f8fafc',
-                    scale: 2, useCORS: true, logging: false
+                    scale: 2, // Resolusi tinggi
+                    useCORS: true, 
+                    logging: false
                 });
                 const link = document.createElement('a');
                 link.download = `Framework_${Date.now()}.png`;
                 link.href = canvas.toDataURL('image/png');
                 link.click();
-            } catch(err) { console.error(err); }
-            setIsExporting(false);
-        }, 100);
+            } catch(err) { 
+                console.error(err); 
+            } finally {
+                // 6. Kembalikan layar ke posisi semula dan matikan loading
+                setPanZoom(oldPanZoom);
+                setIsExporting(false);
+            }
+        }, 500);
     };
 
     // ── json ──
+
     const handleExportJSON = () => {
-        const blob = new Blob([JSON.stringify({ nodes, edges }, null, 2)], { type:'application/json' });
-        const a = Object.assign(document.createElement('a'), { href: URL.createObjectURL(blob), download: `Scenario_${Date.now()}.json` });
+        // Kita tambahkan aiAnalysisResult ke dalam bungkusan yang akan disave
+        const dataToSave = { 
+            nodes, 
+            edges, 
+            aiAnalysisResult 
+        };
+        const blob = new Blob([JSON.stringify(dataToSave, null, 2)], { type:'application/json' });
+        const a = Object.assign(document.createElement('a'), { href: URL.createObjectURL(blob), download: `Framework_Data_${Date.now()}.json` });
         document.body.appendChild(a); a.click(); document.body.removeChild(a);
         setShowMenu(false);
     };
+    
     const handleImportJSON = (e) => {
         const file = e.target.files[0]; if (!file) return;
         const reader = new FileReader();
         reader.onload = (ev) => {
             try {
                 const p = JSON.parse(ev.target.result);
-                if (p.nodes && p.edges) { setNodes(p.nodes); setEdges(p.edges); setPanZoom({x:60,y:60,scale:1}); }
+                if (p.nodes && p.edges) { 
+                    setNodes(p.nodes); 
+                    setEdges(p.edges); 
+                    
+                    // Kita baca juga data AI-nya (jika ada di dalam file)
+                    if (p.aiAnalysisResult) {
+                        setAiAnalysisResult(p.aiAnalysisResult);
+                    } else {
+                        setAiAnalysisResult(''); // Kosongkan jika meload file lama yang belum ada AI-nya
+                    }
+                    
+                    setPanZoom({x:60,y:60,scale:1}); 
+                }
                 else alert('Invalid JSON format.');
             } catch { alert('Failed to read JSON.'); }
         };
@@ -869,7 +998,7 @@ const handleAddRecommendedNode = (title, type, isCause) => {
                          className="absolute inset-0 w-full h-full"
                          style={{ transform:`translate(${panZoom.x}px,${panZoom.y}px) scale(${panZoom.scale})`, transformOrigin:'0 0' }}>
 
-                        <svg className="absolute inset-0 overflow-visible" style={{zIndex:0}}>
+                        <svg className="absolute overflow-visible" xmlns="http://www.w3.org/2000/svg" viewBox="-2000 -2000 8000 8000" style={{ zIndex: 0, width: '8000px', height: '8000px', left: '-2000px', top: '-2000px' }}>
                             <defs>
                                 {Object.entries(EDGE_DIRECTIONS).map(([key, dir]) => (
                                     <React.Fragment key={key}>
@@ -933,21 +1062,21 @@ const handleAddRecommendedNode = (title, type, isCause) => {
                                 const strokeW = (isFramework && isFocused) ? '2.5' : '1.8';
 
                                 return (
-                                    <g key={edge.id} style={{ opacity, transition:'opacity 0.3s' }}>
-                                        <path id={`path-${edge.id}`} d={d} fill="none"
-                                            stroke={strokeColor} strokeWidth={strokeW}
-                                            markerEnd={`url(#arrow-${direction})`}
-                                            markerStart={isBi ? `url(#arrow-${direction}-start)` : undefined}
-                                            strokeDasharray={direction==='hypothesis' ? '6 3' : undefined}
-                                            style={isFramework && isFocused ? { filter:`drop-shadow(0 0 4px ${strokeColor})` } : {}} />
+                                    <g key={edge.id} style={{ opacity: isExporting ? 1 : opacity, transition: isExporting ? 'none' : 'opacity 0.3s' }}>
+                                    <path id={`path-${edge.id}`} d={d} fill="none"
+                                        stroke={strokeColor} strokeWidth={strokeW}
+                                        markerEnd={`url(#arrow-${direction})`}
+                                        markerStart={isBi ? `url(#arrow-${direction}-start)` : undefined}
+                                        strokeDasharray={direction==='hypothesis' ? '6 3' : undefined}
+                                        style={isFramework && isFocused && !isExporting ? { filter:`drop-shadow(0 0 4px ${strokeColor})` } : {}} />
 
-                                        {isFramework && isFocused && (
-                                            <circle r="3.5" fill="white" filter="url(#glow)" className="no-export">
-                                                <animateMotion dur="2.5s" repeatCount="indefinite"><mpath href={`#path-${edge.id}`}/></animateMotion>
-                                            </circle>
-                                        )}
+                                    {isFramework && isFocused && !isExporting && (
+                                        <circle r="3.5" fill="white" filter="url(#glow)" className="no-export">
+                                            <animateMotion dur="2.5s" repeatCount="indefinite"><mpath href={`#path-${edge.id}`}/></animateMotion>
+                                        </circle>
+                                    )}
 
-                                        <foreignObject x={labelX-65} y={labelY-14} width="130" height="28" className="overflow-visible" style={{zIndex:10}}>
+                                    <foreignObject x={labelX-65} y={labelY-14} width="130" height="28" className="overflow-visible" style={{zIndex:10}}>
                                             <div className={`flex items-center justify-center rounded-full text-[9px] font-bold px-2.5 py-1 w-max mx-auto border transition-all ${isFramework ? 'bg-slate-950/80 backdrop-blur' : 'bg-white/95 backdrop-blur border-slate-200/80'}`}
                                                  style={isFramework ? { borderColor: isFocused ? strokeColor : '#1e293b', color: isFocused ? '#fff' : '#475569', boxShadow: isFocused ? `0 0 8px ${strokeColor}50` : 'none' } : { color: strokeColor, borderColor: strokeColor+'60', boxShadow: `0 1px 6px ${strokeColor}20` }}>
                                                 {dir.symbol && <span className="mr-1 font-black">{dir.symbol}</span>}
@@ -985,11 +1114,16 @@ const handleAddRecommendedNode = (title, type, isCause) => {
                                          }`}
                                      style={{ left: rX||0, top: rY||0, opacity, transition: 'opacity 0.25s, transform 0.2s, box-shadow 0.2s' }}>
 
-                                    {/* Freeform drag handle */}
+
+                                    {/* Freeform drag handle (Diperbesar & Diberi Grip) */}
                                     {!isFramework && (
-                                        <div className={`h-2.5 w-full rounded-t-xl cursor-grab active:cursor-grabbing flex items-center justify-center`}
-                                             style={{ backgroundColor: theme.hex + 'cc' }}
+                                        <div className={`h-7 w-full rounded-t-xl cursor-grab active:cursor-grabbing flex items-center justify-center gap-1 hover:brightness-110 transition-all`}
+                                             style={{ backgroundColor: theme.hex + 'dd' }}
                                              onPointerDown={e => handleNodePointerDown(e, node.id)}>
+                                             {/* Titik Grip (Guratan visual untuk ditarik) */}
+                                             <div className="w-1 h-1 rounded-full bg-white/60"></div>
+                                             <div className="w-1 h-1 rounded-full bg-white/60"></div>
+                                             <div className="w-1 h-1 rounded-full bg-white/60"></div>
                                         </div>
                                     )}
 
@@ -1082,14 +1216,15 @@ const handleAddRecommendedNode = (title, type, isCause) => {
                             <p className="text-[10px] font-bold text-cyan-600 uppercase tracking-widest mt-1">{t('smartLayout')}</p>
                         </div>
                     )}
-
-                    {/* Export overlay */}
+                    
+                    {/* Export overlay (Memakai atribut data-html2canvas-ignore agar tidak ikut terfoto) */}
                     {isExporting && (
-                        <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex flex-col items-center justify-center text-cyan-400">
+                        <div data-html2canvas-ignore="true" className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm z-[100] flex flex-col items-center justify-center text-cyan-400">
                             <span className="icon block animate-spin mb-4" style={{fontSize:'44px'}}>autorenew</span>
                             <p className="font-bold tracking-widest uppercase text-sm">{t('exporting')}</p>
                         </div>
                     )}
+
                 </div>
             </div>
         );
@@ -1313,7 +1448,13 @@ const handleAddRecommendedNode = (title, type, isCause) => {
 
 
                 {/* Tombol AI Analyzer di Header */}
-                <button onClick={() => setShowAiConfig(true)}
+                <button onClick={() => {
+                        if (aiAnalysisResult) {
+                            setShowAiAnalysis(true); // Langsung buka hasil jika sudah ada
+                        } else {
+                            setShowAiConfig(true); // Jika belum, minta API Key
+                        }
+                    }}
                     className="flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 text-white shadow-lg hover:shadow-indigo-500/50 hover:scale-105 transition-all group"
                     title="AI Framework Analyzer">
                     <span className="icon group-hover:animate-pulse">smart_toy</span>
@@ -1337,6 +1478,14 @@ const handleAddRecommendedNode = (title, type, isCause) => {
                             <span className="hidden md:block">{t('exportPng')}</span>
                         </button>
                     )}
+
+                    <button 
+                        onClick={() => setShowGuide(true)} 
+                        title="Buka Panduan (User Guide)" 
+                        className="text-slate-500 hover:text-blue-600 bg-white hover:bg-blue-50 border border-slate-200 p-2 rounded-lg transition-all flex items-center justify-center shadow-sm">
+                        <span className="icon">menu_book</span>
+                    </button>
+
                     <button onClick={() => setLang(l => l==='en'?'id':'en')}
                         className="w-10 h-10 border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 rounded-xl font-black text-xs shadow-sm transition-colors">
                         {t('langToggle')}
@@ -1410,7 +1559,7 @@ const handleAddRecommendedNode = (title, type, isCause) => {
 
             {/* Canvas / Framework sub-toggle */}
             {viewMode === 'visual' && (
-                <div className="absolute top-[72px] left-1/2 -translate-x-1/2 bg-white/95 backdrop-blur border border-slate-200 rounded-full p-1 flex shadow-md z-40 no-export">
+                <div className="absolute top-[110px] left-1/2 -translate-x-1/2 bg-white/95 backdrop-blur border border-slate-200 rounded-full p-1 flex shadow-md z-40 no-export">
                     <button onClick={() => setVisualLayout('canvas')}
                         className={`flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-bold transition-all ${visualLayout==='canvas' ? 'bg-indigo-500 text-white shadow-md' : 'text-slate-500 hover:text-slate-800 hover:bg-slate-100'}`}>
                         <span className="icon icon-sm">edit_note</span> {t('freeform')}
@@ -1505,10 +1654,14 @@ const handleAddRecommendedNode = (title, type, isCause) => {
                         <button onClick={() => setAiPage(3)} className={`px-4 py-1.5 rounded-md text-sm font-semibold transition-all ${aiPage === 3 ? 'bg-white shadow-sm text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}>Recommendations</button>
                     </div>
 
-                    <button onClick={() => setShowAiAnalysis(false)} className="text-slate-400 hover:text-slate-600 bg-slate-100 hover:bg-slate-200 p-2 rounded-full transition-all">
-                        <span className="icon">close</span>
-                    </button>
-                </div>
+                    <button onClick={() => { setShowAiAnalysis(false); setShowAiConfig(true); }} title="Ubah API Key" className="text-amber-500 hover:text-amber-600 bg-amber-50 hover:bg-amber-100 p-2 rounded-full transition-all flex items-center justify-center">
+                            <span className="icon">vpn_key</span>
+                        </button>
+                        <button onClick={() => setShowAiAnalysis(false)} className="text-slate-400 hover:text-slate-600 bg-slate-100 hover:bg-slate-200 p-2 rounded-full transition-all flex items-center justify-center">
+                            <span className="icon">close</span>
+                        </button>
+                
+                        </div>
 
                 {/* Content Area */}
                 <div className="flex-1 overflow-y-auto p-6 bg-slate-50/50">
@@ -1525,12 +1678,13 @@ const handleAddRecommendedNode = (title, type, isCause) => {
                                 <div className="flex flex-col gap-5">
                                     <div className="bg-white p-8 rounded-2xl border border-slate-200 shadow-sm">
                                         <h3 className="font-bold text-slate-800 mb-5 flex items-center gap-2 text-lg">
-                                            <span className="icon text-indigo-500">analytics</span> Hasil Analisis AI
+                                            <span className="icon text-indigo-500">analytics</span> {lang === 'en' ? 'AI Analysis Result' : 'Hasil Analisis AI'}
                                         </h3>
-                                        {/* INI KODE MARKDOWN YANG BELUM TERCOPY */}
                                         <div 
                                             className="ai-markdown"
-                                            dangerouslySetInnerHTML={{ __html: window.marked ? window.marked.parse(aiAnalysisResult || '') : aiAnalysisResult }}
+                                            dangerouslySetInnerHTML={{ 
+                                                __html: window.marked ? window.marked.parse(aiAnalysisResult?.analysis_markdown || 'Belum ada data.') : (aiAnalysisResult?.analysis_markdown || 'Belum ada data.') 
+                                            }}
                                         />
                                     </div>
                                 </div>
@@ -1541,61 +1695,73 @@ const handleAddRecommendedNode = (title, type, isCause) => {
                                 <div className="flex flex-col gap-4">
                                     <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
                                         <h3 className="font-bold text-slate-800 mb-4 flex items-center gap-2 text-lg">
-                                            <span className="icon text-teal-500">hub</span> Pemetaan Relasi & Topologi
+                                            <span className="icon text-teal-500">hub</span> {lang === 'en' ? 'Relational & Topology Mapping' : 'Pemetaan Relasi & Topologi'}
                                         </h3>
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
-                                            {/* Error Card */}
-                                            <div className="p-5 bg-rose-50/80 rounded-2xl border border-rose-200 relative overflow-hidden group hover:bg-rose-100 transition-colors cursor-pointer">
-                                                <div className="absolute -right-4 -top-4 text-rose-200/50 group-hover:scale-110 transition-transform"><span className="icon text-8xl">link_off</span></div>
-                                                <div className="relative z-10">
-                                                    <div className="flex items-center gap-2 text-rose-700 font-black mb-2 text-sm uppercase tracking-wide">
-                                                        <span className="icon">error</span> Missing Link
-                                                    </div>
-                                                    <p className="text-sm text-rose-800 leading-relaxed">Variabel <strong>X2</strong> tidak memiliki jalur menuju variabel manapun (Menggantung). Pertimbangkan untuk menghubungkannya ke variabel Mediasi terdekat.</p>
-                                                </div>
-                                            </div>
+                                            {aiAnalysisResult?.topology_health?.map((item, idx) => {
+                                                const isErr = item.type === 'error';
+                                                const isWarn = item.type === 'warning';
+                                                const color = isErr ? 'rose' : (isWarn ? 'amber' : 'indigo');
+                                                const isFullWidth = !isErr && !isWarn;
 
-                                            {/* Warning Card */}
-                                            <div className="p-5 bg-amber-50/80 rounded-2xl border border-amber-200 relative overflow-hidden group hover:bg-amber-100 transition-colors cursor-pointer">
-                                                <div className="absolute -right-4 -top-4 text-amber-200/50 group-hover:scale-110 transition-transform"><span className="icon text-8xl">content_copy</span></div>
-                                                <div className="relative z-10">
-                                                    <div className="flex items-center gap-2 text-amber-700 font-black mb-2 text-sm uppercase tracking-wide">
-                                                        <span className="icon">warning</span> Redundancy
+                                                return (
+                                                    <div key={idx} className={`p-5 bg-${color}-50/80 rounded-2xl border border-${color}-200 relative overflow-hidden group hover:bg-${color}-100 transition-colors cursor-pointer ${isFullWidth ? 'md:col-span-2 shadow-sm' : ''}`}>
+                                                        <div className={`absolute ${isFullWidth ? 'right-0 top-0 text-9xl' : '-right-4 -top-4 text-8xl'} text-${color}-200/50 group-hover:scale-110 transition-transform`}>
+                                                            <span className="icon">{item.icon || 'hub'}</span>
+                                                        </div>
+                                                        <div className="relative z-10">
+                                                            <div className={`flex items-center gap-2 text-${color}-700 font-black mb-2 text-sm uppercase tracking-wide`}>
+                                                                <span className="icon">{isErr ? 'error' : (isWarn ? 'warning' : 'psychology')}</span> {item.title}
+                                                            </div>
+                                                            <p className={`text-sm text-${color}-800 leading-relaxed ${isFullWidth ? 'max-w-2xl' : ''}`}>
+                                                                {item.description}
+                                                            </p>
+                                                        </div>
                                                     </div>
-                                                    <p className="text-sm text-amber-800 leading-relaxed">Variabel <strong>Niat</strong> dan <strong>Motivasi</strong> memiliki makna teoritis yang tumpang tindih. Gabungkan untuk menyederhanakan kompleksitas kerangka.</p>
-                                                </div>
-                                            </div>
-
-                                            {/* Info/Strategy Card (Full Width) */}
-                                            <div className="p-5 bg-indigo-50/80 rounded-2xl border border-indigo-200 relative overflow-hidden group hover:bg-indigo-100 transition-colors cursor-pointer md:col-span-2 shadow-sm">
-                                                <div className="absolute right-0 top-0 text-indigo-200/50 group-hover:scale-110 transition-transform"><span className="icon text-9xl">alt_route</span></div>
-                                                <div className="relative z-10">
-                                                    <div className="flex items-center gap-2 text-indigo-700 font-black mb-2 text-sm uppercase tracking-wide">
-                                                        <span className="icon">psychology</span> Structural Vulnerability
-                                                    </div>
-                                                    <p className="text-sm text-indigo-800 leading-relaxed max-w-2xl">Model ini memiliki efek "Bottleneck". Sangat bergantung pada variabel <strong>Customer Satisfaction</strong> sebagai satu-satunya perantara menuju ujung akhir. Jika variabel ini gagal tercapai, seluruh dampak arsitektur akan runtuh.</p>
-                                                </div>
-                                            </div>
+                                                )
+                                            })}
+                                            {(!aiAnalysisResult?.topology_health || aiAnalysisResult.topology_health.length === 0) && (
+                                                <p className="text-sm text-slate-500 italic col-span-full py-4 text-center">AI tidak menemukan masalah topologi yang signifikan. Struktur terlihat solid.</p>
+                                            )}
                                         </div>
                                     </div>
                                 </div>
                             )}
 
-
                             {/* PAGE 3: RECOMMENDATIONS & REVISION */}
                             {aiPage === 3 && (
                                 <div className="flex flex-col h-full gap-4">
                                     <div className="p-6 bg-indigo-50/50 rounded-2xl border border-indigo-100 flex-1">
-                                        <h3 className="font-bold text-xl mb-4 text-indigo-900">Proposed Changes</h3>
-                                        <ul className="list-disc list-inside text-indigo-800 space-y-2 mb-6">
-                                            <li>Add new node: 'Motivation' as an Intervening variable.</li>
-                                            <li>Change edge type between Node 1 and Node 2 to 'Positive Direction'.</li>
-                                            <li>Merge Node 3 and Node 4 into a single 'Capability' node.</li>
-                                        </ul>
+                                        <h3 className="font-bold text-xl mb-4 text-indigo-900">{lang === 'en' ? 'Proposed Changes' : 'Usulan Perbaikan'}</h3>
+                                        <div className="space-y-3 mb-6">
+                                            {/* Pengaman Array */}
+                                            {Array.isArray(aiAnalysisResult?.recommendations) && aiAnalysisResult.recommendations.map((rec, idx) => {
+                                                const isObj = typeof rec === 'object' && rec !== null;
+                                                const nodeName = isObj ? rec.node_name : (typeof rec === 'string' ? rec : 'Variabel AI');
+                                                const type = isObj ? rec.type : 'independent';
+                                                const reason = isObj ? rec.reason : 'Saran perbaikan dari AI.';
+
+                                                return (
+                                                    <div key={idx} className="bg-white p-4 rounded-xl shadow-sm border border-indigo-50/50">
+                                                        <div className="flex items-center gap-2 mb-1">
+                                                            <span className="font-bold text-indigo-900">{nodeName}</span>
+                                                            <span className="text-[10px] uppercase font-bold text-indigo-400 bg-indigo-50 px-2 py-0.5 rounded-md">{type}</span>
+                                                        </div>
+                                                        <p className="text-sm text-slate-600 leading-relaxed">{reason}</p>
+                                                    </div>
+                                                )
+                                            })}
+                                            
+                                            {(!Array.isArray(aiAnalysisResult?.recommendations) || aiAnalysisResult.recommendations.length === 0) && (
+                                                <div className="italic text-slate-500 p-4 bg-white rounded-xl border border-slate-200 shadow-sm text-sm">
+                                                    Belum ada rekomendasi spesifik, atau format dari AI kurang sesuai. Anda bisa meminta AI mengulanginya dengan menekan tombol Revise di bawah.
+                                                </div>
+                                            )}
+                                        </div>
                                         
                                         <div className="flex gap-3 mt-6">
                                             <button onClick={handleApplyRecommendation} className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2.5 px-6 rounded-xl flex-1 transition-all shadow-md hover:shadow-lg flex justify-center items-center gap-2">
-                                                <span className="icon">check_circle</span> Accept & Apply Structure
+                                                <span className="icon">check_circle</span> {lang === 'en' ? 'Accept & Apply Strategy' : 'Terima Strategi AI'}
                                             </button>
                                         </div>
                                     </div>
@@ -1611,7 +1777,7 @@ const handleAddRecommendedNode = (title, type, isCause) => {
                                                 className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none h-16"
                                             />
                                         </div>
-                                        <button onClick={() => handleStartAnalysis(true)} className="bg-slate-900 hover:bg-slate-800 text-white rounded-xl h-16 px-6 font-bold flex items-center gap-2 transition-all">
+                                        <button onClick={() => handleStartAnalysis(true)} className="bg-slate-900 hover:bg-slate-800 text-white rounded-xl h-16 px-6 font-bold flex items-center gap-2 transition-all shadow-lg">
                                             <span className="icon">send</span> Revise
                                         </button>
                                     </div>
@@ -1832,6 +1998,73 @@ const handleAddRecommendedNode = (title, type, isCause) => {
             </div>
         </div>
     )}
+
+
+    {/* MODAL PANDUAN / USER GUIDE */}
+            {showGuide && (
+                <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-[100] p-4">
+                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl overflow-hidden flex flex-col max-h-[90vh] animate-fade-in-up">
+                        
+                        {/* Header Modal */}
+                        <div className="flex items-center justify-between p-5 border-b border-slate-200 bg-slate-50">
+                            <h2 className="text-xl font-bold flex items-center gap-3 text-slate-800">
+                                <span className="icon text-blue-500 text-3xl">auto_stories</span> 
+                                Panduan Penggunaan / User Guide
+                            </h2>
+                            <button onClick={() => setShowGuide(false)} className="text-slate-400 hover:text-slate-600 bg-slate-200/50 hover:bg-slate-200 p-2 rounded-full transition-all">
+                                <span className="icon">close</span>
+                            </button>
+                        </div>
+
+                        {/* Isi Konten Panduan */}
+                        <div className="p-6 overflow-y-auto custom-scrollbar bg-white">
+                            
+                            {lang === 'id' ? (
+                                /* 🇮🇩 INDONESIA */
+                                <div className="space-y-6">
+                                    <div className="space-y-2 border-b border-slate-100 pb-6">
+                                        <h3 className="font-bold text-slate-800 text-lg flex items-center gap-2"><span className="icon text-emerald-500">add_box</span> Membuat Variabel</h3>
+                                        <p className="text-sm text-slate-600">Klik tombol <b className="text-slate-800">"Add Node"</b> di panel kiri atau klik ganda (double-click) pada area kanvas kosong untuk membuat kotak variabel baru.</p>
+                                    </div>
+                                    <div className="space-y-2 border-b border-slate-100 pb-6">
+                                        <h3 className="font-bold text-slate-800 text-lg flex items-center gap-2"><span className="icon text-emerald-500">account_tree</span> Menghubungkan Garis</h3>
+                                        <p className="text-sm text-slate-600">Pilih Node awal, lalu tahan tombol <b className="text-slate-800">"Shift"</b> di keyboard dan klik Node tujuan. Anda juga bisa menggunakan menu dropdown "Connections" di sidebar.</p>
+                                    </div>
+                                    <div className="space-y-2 border-b border-slate-100 pb-6">
+                                        <h3 className="font-bold text-slate-800 text-lg flex items-center gap-2"><span className="icon text-emerald-500">smart_toy</span> Analisis AI</h3>
+                                        <p className="text-sm text-slate-600">Klik <b className="text-slate-800">Ikon Robot AI</b> di panel atas untuk menganalisis keseluruhan struktur. Atau, klik <b className="text-slate-800">Ikon Tongkat Sihir</b> di masing-masing kotak untuk riset mendalam per variabel.</p>
+                                    </div>
+                                    <div className="space-y-2 pb-2">
+                                        <h3 className="font-bold text-slate-800 text-lg flex items-center gap-2"><span className="icon text-emerald-500">save</span> Simpan & Ekspor</h3>
+                                        <p className="text-sm text-slate-600">Gunakan menu <b className="text-slate-800">Save JSON</b> untuk menyimpan kemajuan kerja. Gunakan <b className="text-slate-800">Export PNG</b> untuk menyimpan gambar struktur yang presisi.</p>
+                                    </div>
+                                </div>
+                            ) : (
+                                /* 🇬🇧 ENGLISH */
+                                <div className="space-y-6">
+                                    <div className="space-y-2 border-b border-slate-100 pb-6">
+                                        <h3 className="font-bold text-slate-800 text-lg flex items-center gap-2"><span className="icon text-emerald-500">add_box</span> Creating Variables</h3>
+                                        <p className="text-sm text-slate-600">Click the <b className="text-slate-800">"Add Node"</b> button on the left panel or double-click on an empty canvas area to create a new variable box.</p>
+                                    </div>
+                                    <div className="space-y-2 border-b border-slate-100 pb-6">
+                                        <h3 className="font-bold text-slate-800 text-lg flex items-center gap-2"><span className="icon text-emerald-500">account_tree</span> Connecting Nodes</h3>
+                                        <p className="text-sm text-slate-600">Select the starting Node, then hold <b className="text-slate-800">"Shift"</b> on your keyboard and click the target Node. Alternatively, use the "Connections" dropdown in the sidebar.</p>
+                                    </div>
+                                    <div className="space-y-2 border-b border-slate-100 pb-6">
+                                        <h3 className="font-bold text-slate-800 text-lg flex items-center gap-2"><span className="icon text-emerald-500">smart_toy</span> AI Analysis</h3>
+                                        <p className="text-sm text-slate-600">Click the <b className="text-slate-800">AI Robot Icon</b> on the top panel to analyze the entire framework. Or, click the <b className="text-slate-800">Magic Wand Icon</b> inside any box for specific deep-dive research.</p>
+                                    </div>
+                                    <div className="space-y-2 pb-2">
+                                        <h3 className="font-bold text-slate-800 text-lg flex items-center gap-2"><span className="icon text-emerald-500">save</span> Save & Export</h3>
+                                        <p className="text-sm text-slate-600">Use <b className="text-slate-800">Save JSON</b> to save your progress so you can load it later. Use <b className="text-slate-800">Export PNG</b> to save a perfectly centered image of your framework.</p>
+                                    </div>
+                                </div>
+                            )}
+
+                        </div>
+                    </div>
+                </div>
+            )}
             
             </main>
 
