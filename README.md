@@ -117,7 +117,7 @@ git clone https://github.com/YOUR_USERNAME/variable-planner.git
 open index.html
 ```
 
-Or just open the [live demo](YOUR_DEMO_URL_HERE) directly.
+Or just open the [live demo]([YOUR_DEMO_URL_HERE](https://anggaconni.github.io/VariablePlanner/)) directly.
 
 ### For AI features
 1. Get a free Gemini API key from [Google AI Studio](https://aistudio.google.com/app/apikey)
