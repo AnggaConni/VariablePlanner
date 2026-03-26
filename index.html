@@ -2467,7 +2467,7 @@ const handleAddRecommendedNode = (title, type, isCause) => {
                             type="text" 
                             value={nodeAiPrompt}
                             onChange={(e) => setNodeAiPrompt(e.target.value)}
-                            placeholder={`Minta AI merevisi analisa tentang "${activeAiNode?.text}"... (Contoh: "Carikan jurnal berbahasa Indonesia")`}
+                            placeholder={`Minta AI merevisi/ Ask AI "${activeAiNode?.text}". (sample: "Carikan jurnal / find papers that support this variable")`}
                             className="flex-1 bg-transparent px-4 outline-none text-sm text-slate-700"
                         />
                             <button onClick={() => handleOpenNodeAi(activeAiNode, true)} className="bg-emerald-600 hover:bg-emerald-700 text-white px-6 font-bold text-sm transition-colors flex items-center gap-2">
