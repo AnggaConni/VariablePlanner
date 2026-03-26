@@ -2591,6 +2591,29 @@ const handleAddRecommendedNode = (title, type, isCause) => {
                             </div>
                         </div>
 
+                        {/* ── SEKSI BARU: DRAG AND DROP ── */}
+                        <div className="guide-section">
+                            <div className="guide-section-header">
+                                <span className="guide-icon bg-blue-100 text-blue-600">
+                                    <span className="icon">drag_pan</span>
+                                </span>
+                                <h3 className="guide-title">Drag & Drop Variabel</h3>
+                            </div>
+                            <div className="guide-body">
+                                <p>Anda dapat mengatur tata letak visual dengan menggeser variabel secara manual:</p>
+                                <ul className="guide-list">
+                                    <li><b>Area Tarik:</b> Arahkan kursor ke <b>header berwarna</b> (bagian paling atas kotak variabel).</li>
+                                    <li><b>Cara Geser:</b> Klik dan tahan (hold) pada header tersebut, lalu gerakkan mouse ke posisi yang diinginkan.</li>
+                                    <li><b>Syarat:</b> Fitur ini hanya aktif di mode <b>Kanvas Bebas</b>. Di mode Kerangka, posisi dikunci otomatis oleh sistem.</li>
+                                </ul>
+                                <div className="guide-tip">
+                                    <span className="icon icon-sm text-blue-500">info</span>
+                                    <span>Jika kursor berubah menjadi ikon tangan (grab), berarti Anda siap menarik variabel tersebut.</span>
+                                </div>
+                            </div>
+                        </div>
+
+
                         {/* ── SEKSI 5: CANVAS vs FRAMEWORK ── */}
                         <div className="guide-section">
                             <div className="guide-section-header">
@@ -2814,6 +2837,29 @@ const handleAddRecommendedNode = (title, type, isCause) => {
                                     <li><b>Move a node:</b> Click and drag the <b>colored header strip</b> at the top of any node card.</li>
                                     <li><b>Auto arrange:</b> Click <kbd>Auto Arrange</kbd> in the zoom panel to sort all nodes into semantic columns automatically.</li>
                                 </ul>
+                            </div>
+                        </div>
+
+                                                
+                        {/* ── NEW SECTION: DRAG AND DROP ── */}
+                        <div className="guide-section">
+                            <div className="guide-section-header">
+                                <span className="guide-icon bg-blue-100 text-blue-600">
+                                    <span className="icon">drag_pan</span>
+                                </span>
+                                <h3 className="guide-title">Drag & Drop Variables</h3>
+                            </div>
+                            <div className="guide-body">
+                                <p>You can organize your visual layout by manually moving variables:</p>
+                                <ul className="guide-list">
+                                    <li><b>Grab Area:</b> Hover your cursor over the <b>colored header strip</b> (the very top part of the variable card).</li>
+                                    <li><b>How to Move:</b> Click and hold the header, then drag it to your preferred location.</li>
+                                    <li><b>Requirement:</b> This feature is only available in <b>Freeform Canvas</b> mode. In Framework View, positions are automatically locked for structure.</li>
+                                </ul>
+                                <div className="guide-tip">
+                                    <span className="icon icon-sm text-blue-500">info</span>
+                                    <span>When your cursor turns into a "grab" hand icon, the variable is ready to be moved.</span>
+                                </div>
                             </div>
                         </div>
 
